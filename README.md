@@ -16,15 +16,17 @@ $ php migas app::create
 ~~~
 Crea la estructura completa para comenzar a desarrollar el proyecto. Si ya se ha creado anteriormente, todo el contenido será borrado. La estructura es:
 
-- **app** : Aquí deben ir todos los módulos que se desarrollen para la aplicación. También debe contener el archivo **app_config.php** y **app_database.php** para los parámetros de configuración y conexión a base de datos, respectivamente
+- `app` : Aquí deben ir todos los módulos que se desarrollen para la aplicación. También debe contener el archivo `app_config.php` y `app_database.php` para los parámetros de configuración y conexión a base de datos, respectivamente
 
-- **pub** : Carpeta destinada a guardar y contener ficheros de uso público, como hojas de estilo, código javascript, etc.
+- `pub` : Carpeta destinada a guardar y contener ficheros de uso público, como hojas de estilo, código javascript, etc.
 
-- **libs** : Si tu proyecto usa librerías de PHP y que son invocadas por muchos módulos, entonces es aquí donde debiesen ir
+- `libs` : Si tu proyecto usa librerías de PHP y que son invocadas por muchos módulos, entonces es aquí donde debiesen ir
 
-- **sql** : Si quieres guardar tus script de SQL, podrías usar este directorio para hacerlo. La verdad, es que sólo existe por un tema de orden
+- `sql` : Si quieres guardar tus script de SQL, podrías usar este directorio para hacerlo. La verdad, es que sólo existe por un tema de orden
 
-- **tmp** : Esta carpeta contiene los logs que se vayan generando durante la ejecución de la aplicación. Lo ideal, es que tenga permiso de escritura
+- `tmp` : Esta carpeta contiene los logs que se vayan generando durante la ejecución de la aplicación. Lo ideal, es que tenga permiso de escritura
+
+- `pan` : Núcleo de Pandemolde. Si no está, no funciona.
 
 
 ### Crear Módulo
@@ -50,13 +52,13 @@ app/
 ~~~
 $ php migas controller::NOMBRE_MODULO/NOMBRE_CONTROLADOR
 ~~~
-Crea un controlador llamado NOMBRE_CONTROLADOR dentro del módulo NOMBRE_MODULO
+Crea un controlador llamado NOMBRE_CONTROLADOR dentro del directorio controllers, en módulo NOMBRE_MODULO, 
 
 ### Crear Entidad
 ~~~
 $ php migas entity::NOMBRE_MODULO/NOMBRE_ENTIDAD
 ~~~
-Crea una entidad llamanda NOMBRE_ENTIDAD dentro del módulo NOMBRE_MODULO
+Crea una entidad llamanda NOMBRE_ENTIDAD dentro del directorio entities, en módulo NOMBRE_MODULO
 
 
 Cada uno de los comandos mencionados anteriormente, aceptan otros parámetros, que pueden revisarlo en la wiki
