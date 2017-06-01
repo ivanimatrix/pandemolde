@@ -10,7 +10,12 @@ class View
     static private $css_code = '';
 
 
-
+    /**
+     * Renderiza una vista(template)
+     * @param null $template string Nombre del fichero de la vista. Si no se especifica, se toma fichero declarado por defecto en App::setDefaultTemplate()
+     * @param null $arr_data array Arreglo de datos que seran procesados para ser utilizados en la vista a renderizar
+     * @throws \Exception
+     */
     public static function render($template = null, $arr_data = null)
     {
         if(!empty($template) or !is_null($template)){
@@ -93,47 +98,17 @@ class View
     }
 
 
+    /**
+     * Asignar un valor a una variable para la vista
+     * @param $name string Nombre de la variable en la vista
+     * @param $val mixed Valor que $name debe tener en la vista
+     */
     public static function set($name, $val)
     {
         //$this->data[$name] = $val;
         self::$data[$name] = $val;
     }
 
-
-    public static function loadCss($css, $dir=null)
-    {
-        $loader = new \pan\Loader();
-        $loader->loadCss($css, $dir);
-        /*
-        if (is_file($css) and is_readable($css)) {
-            if (defined('ENVIRONMENT') and ENVIRONMENT == 'PROD') {
-                $css = str_replace('.js', '.min.js', $css);
-            } else {
-
-            }
-            echo '<link href="' . \pan\Uri::getHost() . $css . '?'.sha1($css.uniqid()).'" type="text/css" rel="stylesheets" />';
-        } else {
-            echo '<style type="text/css">' . $css . '</style>';
-        }*/
-    }
-
-
-    public static function loadJs($javascript,$dir = null)
-    {
-        $loader = new \pan\Loader();
-        $loader->loadJs($javascript, $dir);
-        /*
-        if (is_file($javascript) and is_readable($javascript)) {
-            if (defined('ENVIRONMENT') and ENVIRONMENT == 'PROD') {
-                $javascript = str_replace('.js', '.min.js', $javascript);
-            } else {
-
-            }
-            echo '<script src="' . \pan\Uri::getHost() . $javascript . '?'.sha1($javascript.uniqid()).'" type="text/javascript" charset="' . \pan\App::getCharset() . '"></script>';
-        } else {
-            echo '<script type="text/javascript" charset="' . \pan\App::getCharset() . '">' . $javascript . '</script>';
-        }*/
-    }
 
     /**
      * Agrega codigo CSS a la vista
