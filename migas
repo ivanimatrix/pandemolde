@@ -1,6 +1,8 @@
 #!/usr/bin/php
 <?php
 
+require_once 'pan/kore/Migas.php';
+
 echo "Pandemolde :: Migas\n";
 
 if(!isset($argv[1])){
@@ -23,6 +25,10 @@ if(isset($argv[3])){
 $option = strtolower($parametros[0]);
 
 switch ($option){
+
+    case 'help':
+        echo \pan\Migas::getHelp(strtolower($parametros[1]));
+        break;
 
     case 'app':
         if(isset($parametros[1])){
@@ -240,7 +246,7 @@ switch ($option){
 }
 
 
-echo "-- Saludos\n";
+echo "\n";
 exit(0);
 
 

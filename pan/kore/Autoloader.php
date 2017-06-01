@@ -15,6 +15,8 @@ require_once __DIR__ . '/../utils/panFunc.php';
 require_once __DIR__ . '/../utils/panValidate.php';
 require_once __DIR__ . '/../utils/panHash.php';
 require_once __DIR__ . '/../utils/panFiles.php';
+require_once __DIR__ . '/../utils/panJson.php';
+require_once __DIR__ . '/../utils/panMinify.php';
 require_once __DIR__ . '/Loader.php';
 require_once __DIR__ . '/Entity.php';
 require_once __DIR__ . '/Model.php';

@@ -258,9 +258,9 @@ class DbQueryBuilder
                 return null;
             }
         } catch (\PDOException $e) {
-            panError::_showErrorAndDie($e->getMessage());
+            \pan\panError::_showErrorAndDie($e->getMessage() . "<pre> " . $this->query . "</pre>");
         } catch (\Exception $e) {
-            panError::_showErrorAndDie($e->getMessage());
+            \pan\panError::_showErrorAndDie($e->getMessage());
         }
     }
 
@@ -362,7 +362,7 @@ class DbQueryBuilder
 
             return $store;
         } catch (\PDOException $e) {
-            \pan\panError::_showErrorAndDie($e->getMessage());
+            \pan\panError::_showErrorAndDie($e->getMessage() . "<pre> " . $this->query . "</pre>");
             return null;
         } catch (\Exception $e) {
             \pan\panError::_showErrorAndDie($e->getMessage());

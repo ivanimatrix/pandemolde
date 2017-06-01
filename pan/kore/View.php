@@ -136,11 +136,11 @@ class View
             if (is_file("app/".\pan\Request::getModulo()."/assets/css/".$css) and is_readable("app/".\pan\Request::getModulo()."/assets/css/".$css)) {
                 $css_content = file_get_contents("app/".\pan\Request::getModulo()."/assets/css/".$css);
                 if (defined('ENVIRONMENT') and ENVIRONMENT == 'PROD') {
-                    $css = str_replace('.js', '.min.js', $css);
+                    $css = str_replace('.css', '.min.css', $css);
                 }
 
                 $css_content = preg_replace("/[\n|\r|\n\r]/i","",$css_content);
-                $ccs_content = self::minify_css($css_content);
+                $ccs_content = \pan\panMinify::minCSS($css_content);
                 //echo '<link href="' . \pan\Uri::getHost() . $css . '?'.sha1($css.uniqid()).'" type="text/css" rel="stylesheets" />';
             } else {
                 $css_content = $css;
@@ -170,7 +170,7 @@ class View
 
                     //$js_content = preg_replace("/[\n|\r|\n\r]/i","",$js_content);
                     if(strpos($javascript,'min.js') === false)
-                        $js_content = self::minify_js($js_content);
+                        $js_content = \pan\panMinify::minJS($js_content);
                     //echo '<script src="' . \pan\Uri::getHost() . $javascript . '?'.sha1($javascript.uniqid()).'" type="text/javascript" charset="' . \pan\App::getCharset() . '"></script>';
                     self::$js_code .= '<script type="text/javascript" charset="' . \pan\App::getCharset() . '">'.$js_content.'</script>';
                 } else {
@@ -186,7 +186,8 @@ class View
                     }
 
                     //$js_content = preg_replace("/[\n|\r|\n\r]/i","",$js_content);
-                    $js_content = self::minify_js($js_content);
+                    //$js_content = self::minify_js($js_content);
+                    $js_content = \pan\panMinify::minJS($js_content);
                     //echo '<script src="' . \pan\Uri::getHost() . $javascript . '?'.sha1($javascript.uniqid()).'" type="text/javascript" charset="' . \pan\App::getCharset() . '"></script>';
                     self::$js_code .= '<script type="text/javascript" charset="' . \pan\App::getCharset() . '">'.$js_content.'</script>';
                 } else {
@@ -195,92 +196,6 @@ class View
             }
         }
 
-    }
-
-
-    private static function minify_js($input) {
-        if(trim($input) === "") return $input;
-        return preg_replace(
-            array(
-                // Remove comment(s)
-                '#\s*("(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\')\s*|\s*\/\*(?!\!|@cc_on)(?>[\s\S]*?\*\/)\s*|\s*(?<![\:\=])\/\/.*(?=[\n\r]|$)|^\s*|\s*$#',
-                // Remove white-space(s) outside the string and regex
-                '#("(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\'|\/\*(?>.*?\*\/)|\/(?!\/)[^\n\r]*?\/(?=[\s.,;]|[gimuy]|$))|\s*([!%&*\(\)\-=+\[\]\{\}|;:,.<>?\/])\s*#s',
-                // Remove the last semicolon
-                '#;+\}#',
-                // Minify object attribute(s) except JSON attribute(s). From `{'foo':'bar'}` to `{foo:'bar'}`
-                '#([\{,])([\'])(\d+|[a-z_]\w*)\2(?=\:)#i',
-                // --ibid. From `foo['bar']` to `foo.bar`
-                '#([\w\)\]])\[([\'"])([a-z_]\w*)\2\]#i',
-                // Replace `true` with `!0`
-                '#(?<=return |[=:,\(\[])true\b#',
-                // Replace `false` with `!1`
-                '#(?<=return |[=:,\(\[])false\b#',
-                // Clean up ...
-                '#\s*(\/\*|\*\/)\s*#'
-            ),
-            array(
-                '$1',
-                '$1$2',
-                '}',
-                '$1$3',
-                '$1.$3',
-                '!0',
-                '!1',
-                '$1'
-            ),
-            $input);
-    }
-
-
-    private function minify_css($input) {
-        if(trim($input) === "") return $input;
-        // Force white-space(s) in `calc()`
-        if(strpos($input, 'calc(') !== false) {
-            $input = preg_replace_callback('#(?<=[\s:])calc\(\s*(.*?)\s*\)#', function($matches) {
-                return 'calc(' . preg_replace('#\s+#', "\x1A", $matches[1]) . ')';
-            }, $input);
-        }
-        return preg_replace(
-            array(
-                // Remove comment(s)
-                '#("(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\')|\/\*(?!\!)(?>.*?\*\/)|^\s*|\s*$#s',
-                // Remove unused white-space(s)
-                '#("(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\'|\/\*(?>.*?\*\/))|\s*+;\s*+(})\s*+|\s*+([*$~^|]?+=|[{};,>~+]|\s*+-(?![0-9\.])|!important\b)\s*+|([[(:])\s++|\s++([])])|\s++(:)\s*+(?!(?>[^{}"\']++|"(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\')*+{)|^\s++|\s++\z|(\s)\s+#si',
-                // Replace `0(cm|em|ex|in|mm|pc|pt|px|vh|vw|%)` with `0`
-                '#(?<=[\s:])(0)(cm|em|ex|in|mm|pc|pt|px|vh|vw|%)#si',
-                // Replace `:0 0 0 0` with `:0`
-                '#:(0\s+0|0\s+0\s+0\s+0)(?=[;\}]|\!important)#i',
-                // Replace `background-position:0` with `background-position:0 0`
-                '#(background-position):0(?=[;\}])#si',
-                // Replace `0.6` with `.6`, but only when preceded by a white-space or `=`, `:`, `,`, `(`, `-`
-                '#(?<=[\s=:,\(\-]|&\#32;)0+\.(\d+)#s',
-                // Minify string value
-                '#(\/\*(?>.*?\*\/))|(?<!content\:)([\'"])([a-z_][-\w]*?)\2(?=[\s\{\}\];,])#si',
-                '#(\/\*(?>.*?\*\/))|(\burl\()([\'"])([^\s]+?)\3(\))#si',
-                // Minify HEX color code
-                '#(?<=[\s=:,\(]\#)([a-f0-6]+)\1([a-f0-6]+)\2([a-f0-6]+)\3#i',
-                // Replace `(border|outline):none` with `(border|outline):0`
-                '#(?<=[\{;])(border|outline):none(?=[;\}\!])#',
-                // Remove empty selector(s)
-                '#(\/\*(?>.*?\*\/))|(^|[\{\}])(?:[^\s\{\}]+)\{\}#s',
-                '#\x1A#'
-            ),
-            array(
-                '$1',
-                '$1$2$3$4$5$6$7',
-                '$1',
-                ':0',
-                '$1:0 0',
-                '.$1',
-                '$1$3',
-                '$1$2$4$5',
-                '$1$2$3',
-                '$1:0',
-                '$1$2',
-                ' '
-            ),
-            $input);
     }
 
 }
