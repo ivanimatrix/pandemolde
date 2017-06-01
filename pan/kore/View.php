@@ -48,8 +48,14 @@ class View
         echo self::$js_code;
     }
 
-
-    public static function process($template, $arr_data = null)
+    /**
+     * Procesar una vista para obtener su contenido
+     * @param $template
+     * @param null $arr_data
+     * @param null $other_module
+     * @return string
+     */
+    public static function process($template, $arr_data = null, $other_module = null)
     {
         ob_start();
 
@@ -70,7 +76,12 @@ class View
             $template .= '.php';
         }
 
-        $_template = 'app' . DIRECTORY_SEPARATOR . \pan\Request::getModulo() . DIRECTORY_SEPARATOR . self::$dir_views . DIRECTORY_SEPARATOR . $template;
+        if(!is_null($other_module)){
+            $_template = 'app' . DIRECTORY_SEPARATOR . $other_module . DIRECTORY_SEPARATOR . self::$dir_views . DIRECTORY_SEPARATOR . $template;
+        }else{
+            $_template = 'app' . DIRECTORY_SEPARATOR . \pan\Request::getModulo() . DIRECTORY_SEPARATOR . self::$dir_views . DIRECTORY_SEPARATOR . $template;
+        }
+        //$_template = 'app' . DIRECTORY_SEPARATOR . \pan\Request::getModulo() . DIRECTORY_SEPARATOR . self::$dir_views . DIRECTORY_SEPARATOR . $template;
 
         require_once $_template;
 
