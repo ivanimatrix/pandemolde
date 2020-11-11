@@ -1,4 +1,12 @@
-.phpintel*
-.idea*
-.idea/misc.xml
-.idea/workspace.xml
+app
+app/*
+libs
+libs/*
+pub
+pub/*
+store
+store/*
+sql
+sql/*
+tmp
+tmp/*

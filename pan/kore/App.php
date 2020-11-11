@@ -1,350 +1,128 @@
 <?php
 
-namespace pan;
+namespace Pan\Kore;
 
 
-class App
-{
+class App {
 
-    const STATIC_FILES = 'pub/';
+    public static $environment;
 
-    /**
-     * nombre de la aplicacion
-     * @var string
-     */
-    private static $app_name;
+    public static $version;
 
-    /**
-     * version de la aplicacion
-     * @var mixed
-     */
-    private static $app_version;
+    public static $name;
 
-    /**
-     * ambiente de ejecucion de la aplicacion
-     * @var string
-     */
-    private static $app_environment;
+    public static $default_module;
 
-    /**
-     * codificacion de la aplicacion
-     * @var string
-     */
-    private static $app_charset;
+    public static $default_controller;
 
-    /**
-     * pagina a mostrar para error 404 de html
-     * @var string
-     */
-    private static $app_path404;
+    public static $default_action;
 
-    /**
-     * modulo por defecto
-     * @var [type]
-     */
-    private static $app_default_module;
+    public static $default_template;
 
-    /**
-     * controlador por defecto
-     * @var string
-     */
-    private static $app_default_controller;
+    public static $is_production;
 
-    /**
-     * accion por defecto
-     * @var [type]
-     */
-    private static $app_default_action;
+    public static $charset = 'UTF-8';
 
-    /**
-     * template por defecto
-     * @var [type]
-     */
-    private static $app_default_template;
+    public static $salt = '';
 
-    /**
-     * string salt para encriptacion de claves
-     * @var [type]
-     */
-    private static $app_salt = 'thisissaltforencryptation';
-
-    /**
-     * habilitar uso de sesiones
-     * @var [type]
-     */
-    private static $app_session;
+    public static $view_debug = false;
 
 
-    /**
-     * habilitar uso de log de queries para auditoria
-     * @var [type]
-     */
-    private static $app_db_auditoria;
+    private static $_app_config;
 
-    /**
-     * indicar ambiente de ejecucion para auditoria de queries
-     * @var [type]
-     */
-    private static $app_db_auditoria_environment;
-
-
-    /**
-     * si se activa la auditoria de queries, se debe indicar que parametro de session se debe guardar para asociarlo al usuario que ejecuta la query
-     * @var [type]
-     */
-    private static $app_data_session_user = 'id';
-
-
-    private static $app_template;
-
-
-    public function __construct()
+    public function __construct($app_config)
     {
 
+        self::$environment = $app_config['app_environment'];
+        self::$name = $app_config['app_name'];
+        self::$version = $app_config['app_version'];
+        self::$default_module = $app_config['app_default_module'];
+        self::$default_controller = $app_config['app_default_controller'];
+        self::$default_action = $app_config['app_default_action'];
+        self::$is_production = $app_config['app_is_production'];
+        self::$default_template = $app_config['app_default_template'];
+        self::$salt = $app_config['app_salt'];
+        self::$view_debug = $app_config['app_view_debug'];
+
+        self::$_app_config = $app_config;
     }
+
 
     /**
-     * setear todas las variables del localismo para la aplicacion
-     * @param  [type] $app_locale [description]
-     * @return [type]             [description]
-     */
-    public static function locale($app_locale = 'en_US')
-    {
-        setlocale(LC_ALL, $app_locale);
-    }
-
-
-    public static function setTimeZone($app_timezone){
-        date_default_timezone_set($app_timezone);
-    }
-
-    public static function setSessionApp($app_session)
-    {
-        if (is_bool($app_session))
-            self::$app_session = $app_session;
-        else
-            panError::_showErrorAndDie('El valor para setSessionApp debe ser true o false');
-
-    }
-
-
-    public static function getSessionApp()
-    {
-        return self::$app_session;
-    }
-
-    /**
-     * setear nombre de la aplicacion
-     * @param string
-     */
-    public static function setAppName($app_name)
-    {
-        self::$app_name = $app_name;
-    }
-
-    /**
-     * obtener nombre de la aplicacion
-     * @return string
-     */
-    public static function getAppName()
-    {
-        return self::$app_name;
-    }
-
-    /**
-     * setear version de la aplicacion
-     * @param mixed
-     */
-    public static function setAppVersion($app_version)
-    {
-        self::$app_version = $app_version;
-    }
-
-    /**
-     * obtener version de la aplicacion
+     * @throws \Exception
      * @return mixed
      */
-    public static function getAppVersion()
+    public function init()
     {
-        return self::$app_version;
-    }
+        try {
+            return \Pan\Kore\Bootstrap::run();
+        } catch (\Exception $e) {
+            if (self::$view_debug == true) {
+                \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage());
+            }
 
-    /**
-     * setear ambiente de ejecucion de la aplicacion
-     * @param string
-     */
-    public static function setAppEnvironment($app_environment)
-    {
-        self::$app_environment = $app_environment;
-    }
+            if (is_dir('tmp/logs/') and is_writable('tmp/logs/')) {
+                error_log("\n" . date('Y-m-d H:i:s') . " " . $e->getMessage(), 3, 'tmp/logs/error_log_' . date('Ymd') . '.log');
+            } else {
+                error_log(\Pan\Kore\App::getName() . " " . $e->getMessage());
+            }
 
-    /**
-     * obtener ambiente de ejecucion de la aplicacion
-     * @return string
-     */
-    public static function getAppEnvironment()
-    {
-        return self::$app_environment;
-    }
-
-    /**
-     * setear codificacion de la aplicacion
-     * @param string
-     */
-    public static function setCharset($app_charset)
-    {
-        self::$app_charset = $app_charset;
-    }
-
-    /**
-     * obtener codificacion de la aplicacion
-     * @return string
-     */
-    public static function getCharset()
-    {
-        return self::$app_charset;
-    }
-
-    /**
-     * setear ruta de archivo para pagina 404
-     * @param string
-     */
-    public static function setPath404($app_path404)
-    {
-        self::$app_path404 = $app_path404;
-    }
-
-    /**
-     * obtener ruta de archivo de pagina 404
-     * @return string
-     */
-    public static function getPath404()
-    {
-        return self::$app_path404;
+            //error_log($e->getMessage(), 3, 'tmp/logs/error_log_' . date('Ymd') . '.log');
+            die;
+        }
     }
 
 
-    public static function setDefaultModule($app_default_module)
+    public static function get($item)
     {
-        self::$app_default_module = $app_default_module;
+        if (isset(self::$_app_config[$item]))
+            return self::$_app_config[$item];
+
+        return null;
+    }
+
+    public static function getName()
+    {
+        return self::$name;
     }
 
     public static function getDefaultModule()
     {
-        return self::$app_default_module;
+        return self::$default_module;
     }
 
-    /**
-     * setear controlador por defecto para la aplicacion
-     * @param string
-     */
-    public static function setDefaultController($app_default_controller)
-    {
-        self::$app_default_controller = $app_default_controller;
-    }
 
-    /**
-     * obtener controlador por defecto de la aplicacion
-     * @return string
-     */
     public static function getDefaultController()
     {
-        return self::$app_default_controller;
+        return self::$default_controller;
     }
 
-    /**
-     * setear accion por defecto de la aplicacion
-     * @param string
-     */
-    public static function setDefaultAction($app_default_action)
-    {
-        self::$app_default_action = $app_default_action;
-    }
 
-    /**
-     * obtener accion por defecto de la aplicacion
-     * @return [type]
-     */
     public static function getDefaultAction()
     {
-        return self::$app_default_action;
+        return self::$default_action;
     }
 
-    /**
-     * setear template por defecto
-     * @param [type] $template [description]
-     */
-    public static function setDefaultTemplate($template)
+
+    public static function getCharset()
     {
-        self::$app_default_template = $template;
-    }
-
-    /**
-     * obtener template por defecto
-     * @return [type] [description]
-     */
-    public static function getDefaultTemplate(){
-        return self::$app_default_template;
+        return self::$charset;
     }
 
 
-    public static function setSalt($app_salt)
+    public static function getDefaultTemplate()
     {
-        self::$app_salt = $app_salt;
+        return self::$default_template;
     }
-
 
     public static function getSalt()
     {
-        return self::$app_salt;
+        return self::$salt;
     }
 
-
-    public static function setDbAuditoria($app_db_auditoria = false)
+    public static function getDebugView()
     {
-        if (is_bool($app_db_auditoria))
-            self::$app_db_auditoria = $app_db_auditoria;
-        else
-            self::$app_db_auditoria = false;
-
+        return self::$view_debug;
     }
-
-    public static function getDbAuditoria()
-    {
-        return self::$app_db_auditoria;
-    }
-
-
-    public static function setDbAuditoriaEnvironment($app_db_auditoria_environment = 'PROD')
-    {
-        self::$app_db_auditoria_environment;
-    }
-
-    public static function getDbAuditoriaEnvironment()
-    {
-        return self::$app_db_auditoria_environment;
-    }
-
-
-    public static function setDataSessionUser($app_data_session_user = 0)
-    {
-        self::$app_data_session_user = $app_data_session_user;
-    }
-
-    public static function getDataSessionUser()
-    {
-        return self::$app_data_session_user;
-    }
-
-    public static function setTemplate($app_template)
-    {
-        self::$app_template = $app_template;
-    }
-
-    public static function getTemplate()
-    {
-        return self::$app_template;
-    }
-
 
 }

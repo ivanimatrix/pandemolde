@@ -1,6 +1,6 @@
 <?php
 
-namespace pan;
+namespace Pan\Db;
 
 
 class DbQueryBuilder
@@ -45,16 +45,16 @@ class DbQueryBuilder
     public function fields($fields = null)
     {
         if (is_null($fields)) {
-            panError::_showErrorAndDie('Se deben ingresar los campos que se desean seleccionar: ' . $this->query);
+            \Pan\Utils\ErrorPan::_showErrorAndDie('Se deben ingresar los campos que se desean seleccionar: ' . $this->query);
         }
 
         if ($this->query === "")
             $this->query = "select ";
 
-        /*if (empty($this->string_query) and panValidate::isLiteral($fields))
+        /*if (empty($this->string_query) and validatePan::isLiteral($fields))
             $this->string_query = 'SELECT ' . $fields;*/
 
-        if (panValidate::isArray($fields)) {
+        if (\Pan\Utils\ValidatePan::isArray($fields)) {
             $fields_name = '';
             foreach ($fields as $field) {
                 $fields_name .= $field . ', ';
@@ -74,10 +74,10 @@ class DbQueryBuilder
         if ($this->select == "")
             $this->select = "SELECT ";
         
-        /*if (empty($this->string_query) and panValidate::isLiteral($fields))
+        /*if (empty($this->string_query) and validatePan::isLiteral($fields))
             $this->string_query = 'SELECT ' . $fields;*/
 
-        if (panValidate::isArray($fields)) {
+        if (\Pan\Utils\ValidatePan::isArray($fields)) {
             $fields_name = '';
             foreach ($fields as $field) {
                 $fields_name .= $field . ', ';
@@ -119,7 +119,6 @@ class DbQueryBuilder
         }
         return $this->getQuery($this->query, $this->params);
     }
-
 
     public function from($from, $alias = null)
     {
@@ -179,7 +178,7 @@ class DbQueryBuilder
 
     public function order($by, $order = 'ASC')
     {
-        if (panValidate::isArray($by)) {
+        if (\Pan\Utils\ValidatePan::isArray($by)) {
             $order_query = ' order by ';
             foreach ($by as $key => $value) {
                 $order_query .= $key . ' ' . $value . ', ';
@@ -223,9 +222,9 @@ class DbQueryBuilder
             //return $stmt->fetchAll();
             return $this;
         } catch (\PDOException $e) {
-            panError::_showErrorAndDie($e->getMessage());
+            errorPan::_showErrorAndDie($e->getMessage());
         } catch (\Exception $e) {
-            panError::_showErrorAndDie($e->getMessage());
+            errorPan::_showErrorAndDie($e->getMessage());
         }*/
     }
 
@@ -242,6 +241,7 @@ class DbQueryBuilder
 
         try {
             $stmt = $this->db->prepareQuery($query);
+            $tiempo_inicial = microtime(true);
             if (!is_null($parameters)) {
                 if (is_array($parameters)) {
                     $stmt->execute($parameters);
@@ -252,15 +252,20 @@ class DbQueryBuilder
                 $stmt->execute();
             }
 
+            $total_time = ((microtime(true) - $tiempo_inicial));
+
+
             if ($stmt->rowCount() >= 0) {
                 return true;
             } else {
                 return null;
             }
         } catch (\PDOException $e) {
-            \pan\panError::_showErrorAndDie($e->getMessage() . "<pre> " . $this->query . "</pre>");
+            error_log($e->getMessage());
+            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage()."<br><pre>".$query."</pre><br>");
         } catch (\Exception $e) {
-            \pan\panError::_showErrorAndDie($e->getMessage());
+            error_log($e->getMessage());
+            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage()."<br><pre>".$query."</pre><br>");
         }
     }
 
@@ -273,7 +278,7 @@ class DbQueryBuilder
         $keys = array();
         $values = array();
 
-        if (panValidate::isArray($this->params)) {
+        if (\Pan\Utils\ValidatePan::isArray($this->params)) {
             foreach ($this->params as $key => $value) {
                 if (is_string($key)) {
                     $keys[] = '/:' . $key . '/';
@@ -310,7 +315,7 @@ class DbQueryBuilder
     public function runQuery()
     {
         try {
-            $store = new \pan\DbStore();
+            $store = new \Pan\Db\DbStore();
 
             if(empty($this->query) or is_null($this->query))
                 $this->query = $this->select . $this->from . $this->join . $this->where . $this->orderBy . $this->groupBy . $this->limit;
@@ -339,21 +344,7 @@ class DbQueryBuilder
             $store->setQueryString($this->showQuery());
             //$this->num_rows = $stmt->rowCount();
 
-            if(\pan\App::getDbAuditoria()){
-                $conn_auditoria = new \pan\DbConexion(DB_TYPE_AUDIT, DB_HOST_AUDIT, DB_PORT_AUDIT, DB_NAME_AUDIT, DB_USER_AUDIT, DB_PASS_AUDIT, DB_CHARSET_AUDIT);
-                $stmt_auditoria = $conn_auditoria->prepareQuery($this->auditTable());
-                $stmt_auditoria->execute();
-                $insert_query_log = 'insert into '.DB_PREFIX_AUDIT.'audit_'.date('Ym').'(audit_date,audit_user,audit_query,audit_time,audit_ip) values(?,?,?,?,?)';
-                $parameters_log = array(
-                    date('Y-m-d H:i:s'),
-                    \pan\panSession::getSession(\pan\App::getDataSessionUser()),
-                    $this->showQuery(),
-                    $total_time,
-                    ''
-                    );
-                $stmt_auditoria = $conn_auditoria->prepareQuery($insert_query_log);
-                $stmt_auditoria->execute($parameters_log);
-            }
+
 
             //return $stmt->fetchAll();
             //
@@ -362,10 +353,10 @@ class DbQueryBuilder
 
             return $store;
         } catch (\PDOException $e) {
-            \pan\panError::_showErrorAndDie($e->getMessage() . "<pre> " . $this->query . "</pre>");
+            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage()."<br><pre>".$this->showQuery()."</pre><br>");
             return null;
         } catch (\Exception $e) {
-            \pan\panError::_showErrorAndDie($e->getMessage());
+            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage()."<br><pre>".$this->showQuery()."</pre><br>");
             return null;
         }
 
@@ -394,9 +385,9 @@ class DbQueryBuilder
             $this->num_rows = $stmt->rowCount();
             return $this->num_rows;
         } catch (\PDOException $e) {
-            panError::_showErrorAndDie($e->getMessage());
+            errorPan::_showErrorAndDie($e->getMessage());
         } catch (\Exception $e) {
-            panError::_showErrorAndDie($e->getMessage());
+            errorPan::_showErrorAndDie($e->getMessage());
         }*/
 
     }
@@ -428,6 +419,32 @@ class DbQueryBuilder
         return $query;
 
         
+    }
+
+
+    protected function getTipoQuery($query) {
+
+        $tipo = substr(trim($query),0,6);
+
+        return $tipo;
+
+    }
+
+
+    /**
+     * Ejecutar query directamente
+     *
+     * @param string $raw_query string de la query
+     * @param array $parameters parametros de la query, si $raw_query va de manera parametrizada
+     * @return void
+     */
+    public static function raw($raw_query = null, $parameters = null)
+    {
+        if (is_null($raw_query)) {
+            return null;
+        }
+
+        return self::$db->getQuery($raw_query, $parameters)->runQuery()->getRows();
     }
 
 

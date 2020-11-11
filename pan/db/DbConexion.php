@@ -1,6 +1,6 @@
 <?php
 
-namespace pan;
+namespace Pan\Db;
 
 class DbConexion  {
 
@@ -25,9 +25,9 @@ class DbConexion  {
         try {
             $this->conn = new \PDO($this->conn_string, $db_user, $db_pass, $this->conn_options);
         } catch (\PDOException $e) {
-            panError::_showErrorAndDie($e->getMessage());
+            errorPan::_showErrorAndDie($e->getMessage());
         } catch (\Exception $e) {
-            panError::_showErrorAndDie($e->getMessage());
+            errorPan::_showErrorAndDie($e->getMessage());
         }
     }
 

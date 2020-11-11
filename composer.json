@@ -1,0 +1,6 @@
+{
+    "require": {
+        "filp/whoops": "^2.2",
+        "maximebf/debugbar": "^1.15"
+    }
+}
