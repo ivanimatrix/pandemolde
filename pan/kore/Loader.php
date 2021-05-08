@@ -1,6 +1,6 @@
 <?php
 
-namespace pan;
+namespace Pan\Kore;
 
 
 class Loader {

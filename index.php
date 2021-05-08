@@ -1,16 +1,17 @@
 <?php
-require_once __DIR__.'/app/app_config.php';
-require_once __DIR__.'/pan/kore/Autoloader.php';
+session_start();
 
-if(\pan\App::getAppEnvironment() === "PROD" or \pan\App::getAppEnvironment() === "TEST"){
-    error_reporting(0);
-}else{
-    error_reporting(E_ALL);
-    ini_set('display_errors','On');
-}
+//error_reporting(E_ALL); ini_set('display_errors', 1);
 
-try {
-    \pan\Bootstrap::run(new \pan\Request);
-} catch (\Exception $e) {
-    \pan\panError::_showErrorAndDie($e->getMessage());
-}
+/**
+ * cargar el autoload para librerias en vendor
+ */
+require __DIR__.'/vendor/autoload.php';
+require __DIR__.'/pan/kore/Autoloader.php';
+
+$app = require_once __DIR__.'/pan/bootstrap/app.php';
+
+$app->init();
+
+
+

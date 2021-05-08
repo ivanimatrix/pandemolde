@@ -1,74 +1,69 @@
 <?php
-require_once __DIR__.'/../pan/kore/App.php';
+
+$app_config = array(
+
+    /**
+     * nombre de la aplicacion
+     */
+    'app_name' => 'APP_NAME',
+
+    /**
+     * version de la aplicacion
+     */
+    'app_version' => '1.0',
 
 
-/**
- * Nombre de la aplicacion
- */
-\pan\App::setAppName('');
+    /**
+     * Ambiente de ejecucion
+     * PROD - produccion
+     * TEST - testing
+     * DEV  - desarrollo
+     */
+    'app_environment' => 'DEV',
 
-/**
- * Version de la aplicacion
- */
-\pan\App::setAppVersion('');
+    /**
+     * Modulo por defecto al iniciar la aplicacion
+     */
+    'app_default_module' => 'Usuario',
 
-/**
- * Ambiente de ejecucion de la aplicacion
- * - PROD > produccion
- * - TEST > testing
- * - DEV > desarrollo
- * - LOCAL > localhost
- */
-\pan\App::setAppEnvironment('');
+    /**
+     * Controlador por defecto al iniciar la aplicacion
+     */
+    'app_default_controller' => 'Login',
 
+    /**
+     * Accion por defecto al iniciar la aplicacion
+     */
+    'app_default_action' => 'index',
 
-/**
- * codificacion de la aplicacion
- */
-\pan\App::setCharset('');
+    /**
+     * Indicar ruta del template base, en caso de usar uno. Ubicarlo dentro de carpeta app
+     */
+    'app_default_template' => '',
 
+    /**
+     * Definir ruta para mostrar pagina en error 404
+     */
+    'app_path_404' => '',
 
-/**
- * definir pagina para error 404
- */
-\pan\App::setPath404('');
+    /**
+     * Indicar si la aplicacion se ejecuta en ambiente produccion
+     */
+    'app_is_production' => true,
 
+    /**
+     * Salt para hash
+     */
+    'app_salt' => 'APP_SALT',
 
-\pan\App::setDefaultModule('');
-/**
- * definir controlador por defecto
- */
-\pan\App::setDefaultController('');
+    /**
+     * Habilita visualizacion de errores
+     */
+    'app_view_debug' => true,
 
-/**
- * definir pagina por defecto al ingresar
- */
-\pan\App::setDefaultAction('');
+    /**
+     * Define ubicación para almacenar y guardar ficheros dentro de la aplicación
+     */
+    'app_storage' => 'store'
 
-
-/**
- * indicar el template por defecto de la aplicación
- */
-\pan\App::setDefaultTemplate('');
-
-
-/**
- * habilitar uso de sesiones
- */
-\pan\App::setSessionApp(boolean);
-
-
-/**
- * localizacion de la aplicación
- */
-\pan\App::locale('');
-
-\pan\App::setDbAuditoria(boolean);
-
-\pan\App::setDataSessionUser('');
-
-
-\pan\App::setTemplate('');
-
-
-
+);

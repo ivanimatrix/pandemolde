@@ -1,6 +1,31 @@
+<!--
 <div style="width:100%;overflow: hidden;border:1px solid #f00;font-family:Arial,Helvetica">
     <div style=",sans-serif;text-align:left;font-size:16px;line-height: 20px;height: 20;background-color:#ff1110;color:#fff;padding:10px;font-weight: bold">
         __appname__ :: Error
     </div>
     <div style="font-size:14px;padding:10px">__message__</div>
-</div>
+</div>-->
+<html>
+<head>
+    <style>
+        html{
+            background-color : #111;
+            color : #fff;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .container{margin:0 auto; width:75%}
+        .container-title{font-size:13px;margin:15px 0; }
+        .container-message{font-size:12px; line-height: 20px; background-color: #777;padding: 5px 10px;}
+        .container-debug-trace{font-family: Monaco, Inconsolata;font-size:11px; line-height: 26px; background-color: #999; padding: 5px 10px;font-weight: bold}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <hr/>
+        <div class="container-title">Oops! Yo que tu reviso lo siguiente en <strong>__appname__</strong></div>
+        <hr/>
+        <div class="container-message">__message__</div>
+        <div class="container-debug-trace">__debugtrace__</div>
+    </div>
+</body>
+</html>

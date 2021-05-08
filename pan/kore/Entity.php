@@ -1,5 +1,5 @@
 <?php
-namespace pan;
+namespace Pan\Kore;
 
 
 class Entity{
@@ -12,10 +12,21 @@ class Entity{
 
     protected $_entity = null;
 
+    protected $_fields = array();
+
+    protected $_queryable = array();
+
+    protected $_oneToOne = array();
+
+    protected $_oneToMany = array();
+
+    protected $_manyToMany = array();
+
+
 	public function __construct($_entity=null){
-        $this->db = new \pan\DbQueryBuilder();
+        $this->db = new \Pan\Db\DbQueryBuilder();
         if(!is_null($_entity)){
-            $this->_entity = $_entity;
+            $this->setEntity($_entity);
         }
 	}
 
@@ -34,6 +45,26 @@ class Entity{
      */
     public function setEntity($_entity){
         $this->_entity = $_entity;
+        $sql = 'select * from ' . $this->table . ' where ' . $this->primary_key . ' = ? ';
+        $result = $this->db->getQuery($sql, $this->_entity)->runQuery();
+        if ($result->getNumRows() == 1) {
+            $res = $result->getRows(0);
+            foreach($res as $field => $val) {
+                $this->_fields[$field] = $val;
+                $this->{$field} = $val;
+            }
+            
+            
+        } else {
+            $this->_entity = null;
+        }
+        
+    }
+
+
+    public function getEntity()
+    {
+        return $this->_entity;
     }
 
 
@@ -42,16 +73,16 @@ class Entity{
      * @param  string $field nombre del campo que se desea obtener. Si se omite, el retorno correspondera a todos los campos asociados a la entidad instanciada
      * @return [type]        [description]
      */
-    public function get($field='*'){
-        if(!is_null($this->_entity)){
-            $sql = 'select '.$field.' from ' .$this->table .' where ' .$this->primary_key .' = ? ';
-            $result = $this->db->getQuery($sql,$this->_entity)->runQuery();
-            if($result->getNumRows() > 0){
-                if($field == '*' or empty($field) or is_null($field)){
-                    return $result->getRows(0);
-                }else{
-                    return $result->getRows(0)->$field;    
-                }
+    public function get($field = null){
+        if(!is_null($field)){
+            if (isset($this->_fields[$field])) {
+                return $this->_fields[$field];
+            } 
+        }else{
+            $sql = 'select * from ' . $this->table . ' where ' . $this->primary_key . ' = ? ';
+            $result = $this->db->getQuery($sql, $this->_entity)->runQuery();
+            if ($result->getNumRows() == 1) {
+                return $result->getRows(0);
             }
         }
         return null;
@@ -75,16 +106,13 @@ class Entity{
         }
 
 
-        $return = $this->db->execQuery($insert,$parameters);
-        if($return_last_id){
-            return $this->db->getLastId();
-        }else{
-            return $return;
-        }
+        $return = $this->db->execQuery($insert,$parameters, $return_last_id);
+        
+        return $return;
 	}
 
 
-	public function update($parametros, $pk, $conditions=null){
+	public function update($parametros, $pk = null, $conditions=null){
         $parameters = array();
         $update = "update ".$this->table." set ";
         if(is_array($parametros)){
@@ -98,7 +126,19 @@ class Entity{
         if(is_null($conditions)){
             $update .= ' where '.$this->primary_key.' = ?';
             $parameters[] = $pk;
-        }
+        }else{
+            if(is_array($conditions)) {
+                $update .= " where ";
+                foreach ($conditions as $c => $v) {
+                    $update .= ' ' . $c . ' = ? and';
+                    $parameters[] = $v;
+                }
+                $update = trim($update, 'and');
+            } else {
+                $update .= " where $conditions";
+            }
+
+		}
 
         return $this->db->execQuery($update,$parameters);
 	}
@@ -113,12 +153,12 @@ class Entity{
         if(is_null($fields)){
             $fields = '*';
         }else{
-            if(\pan\panValidate::isArray($fields)){
+            if(\pan\Utils\ValidatePan::isArray($fields)){
                 foreach($fields as $field){
                     $query .= $field.', ';
                 }
                 $query = trim($query,', ');
-            }elseif(\pan\panValidate::isLiteral($fields)){
+            }elseif(\pan\Utils\ValidatePan::isLiteral($fields)){
                 $query .= $fields.' ';
             }
         }
@@ -166,7 +206,7 @@ class Entity{
 
             $sql .= ' where b.'. $this->primary_key .' = ? ';
             $params = array($this->_entity);
-          
+
             $result = $this->db->getQuery($sql,$params)->runQuery();
         }else{
             $sql = 'select * from ' . $this->table . ' a ';
@@ -177,10 +217,20 @@ class Entity{
                 $sql .= ' left join ' . $name_other_table . ' b on a.' . $pk_other_table . ' = b.' . $fk;
             }
             
-        
+
             $result = $this->db->getQuery($sql)->runQuery();
+
+
         }
-        return $result->getRows();
+
+        if($result->getNumRows() > 1 ){
+            return $result->getRows();
+        }elseif($result->getNumRows() == 1){
+            return $result->getRows(0);
+        }else{
+            return null;
+        }
+        
        
     }
 
@@ -201,22 +251,26 @@ class Entity{
      * @param $arr_entities arreglo con las entidades y campo que se relaciona en $table_many. Ej.: array('Entidad A'=>'campoA','Entidad B'=>'campoB')
      * @return $this
      */
-    public function hasManyToMany($table_many,$arr_entities){
+    public function hasManyToMany($table_many,$arr_entities, $new_pk = null){
         $loader = new \pan\Loader();
         $inner = '';
+        
         if(is_array($arr_entities)){
             foreach($arr_entities as $entity => $pk){
                 $a = $loader->entity($entity);
-                $inner .= ' inner join ' . $a->getTable() . ' on ' . $a->getPrimaryKey() . ' = ' . $pk;
+                $inner .= ' inner join ' . $a->getTable() . ' b on b.' . $a->getPrimaryKey() . ' = a.' . $pk;
 
             }
         }
+        $sql = 'select * from ' . $table_many . ' a '. $inner;
 
-        $sql = 'select * from ' . $table_many . $inner;
-        
         if(!is_null($this->_entity)){
             $params = null;
-            $sql .= ' where ' .$this->primary_key .' = ? ';
+            $_pk = $this->primary_key;
+            if (!is_null($new_pk)) {
+                $_pk = $new_pk;
+            }
+            $sql .= ' where a.' . $_pk.' = ? ';
             $params = array($this->_entity);
             return $this->db->getQuery($sql,$params)->runQuery()->getRows();
         }else{
@@ -244,5 +298,111 @@ class Entity{
         }
     }
 
+
+    public function where($where = array(), $parameters = null)
+    {
+
+        $query = "select ";
+        if (empty($fields) or is_null($fields))
+            $fields = '*';
+
+
+        if (is_null($fields)) {
+            $fields = '*';
+        } else {
+            if (\pan\Utils\ValidatePan::isArray($fields)) {
+                foreach ($fields as $field) {
+                    $query .= $field . ', ';
+                }
+                $query = trim($query, ', ');
+            } elseif (\pan\Utils\ValidatePan::isLiteral($fields)) {
+                $query .= $fields . ' ';
+            }
+        }
+
+        $query .= ' from ' . $this->table;
+
+        $params = array();
+        if (is_array($where) and count($where) > 0) { 
+            $query .= ' where ';
+            $last_conn_log = 'and';
+            foreach ( $where as $field => $value) {
+                if (is_array($value)) {
+                    $val = $value[0];
+                    $cond = $value[1];
+                    $conn_log = 'and';
+                    if(isset($value[2])){
+                        $conn_log = $value[2];
+                    }
+                    /* $value = implode(',', $value);
+                    $query .= ' ' . $field . ' in ('.$value.') and'; */
+                    if(strtolower($cond) == "in" or strtolower($cond) == "not in"){
+                        if(is_array($val)){
+                            $val = implode(',', $val);
+                        }
+                        $query .= ' ' . $field . ' ' . $cond .' (' . $val. ') ' . $conn_log;
+                    }else{
+                        $query .= ' ' . $field . ' ' . $cond .' ? ' . $conn_log;
+			            $params[] = $val;
+                    }
+                    
+                    //$params[] = $val;
+                    $last_conn_log = $conn_log;
+                } else{
+                    $query .= ' ' . $field . ' = ? and';
+                    $params[] = $value;
+                    $last_conn_log = 'and';
+                }
+               
+                
+            }
+            $query = trim($query, $last_conn_log);
+            
+        } elseif (is_string($where)) {
+            if (!is_null($parameters)) {
+                $query .= ' where ' . $where;
+                $params = $parameters;
+            } else {
+                $query .= ' where ' . $where;
+            }
+
+        }
+
+        return $this->db->getQuery($query, $params);
+    }
+
+
+    public function all($arguments = null)
+    {
+        $query = "select * from " . $this->table;
+
+        if (!is_null($arguments)) {
+            if (is_string($arguments)) {
+                $query .= ' ' . $arguments;
+            }
+        }
+
+        return $this->db->getQuery($query)->runQuery()->getRows();
+    }
+
+
+    public function getByPK($pk) {
+        if (!$pk)
+            return null;
+
+        $query = 'select * from ' . $this->table . ' where ' . $this->primary_key . ' = ?  limit 1';
+        return $this->db->getQuery($query, $pk)->runQuery()->getRows(0);
+
+    }
+
+    
+    public function raw($raw_query = null, $parameters = null)
+    {
+        if (is_null($raw_query)) {
+            return null;
+        }
+
+        return $this->db->getQuery($raw_query, $parameters)->runQuery()->getRows();
+    }
 
 }

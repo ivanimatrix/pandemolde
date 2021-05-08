@@ -1,5 +1,5 @@
 <?php
-namespace pan;
+namespace Pan\Db;
 
 
 class DbStore {
@@ -14,8 +14,13 @@ class DbStore {
 
 	public function getRows($index=null){
 		
-		if(is_numeric($index) and $index>=0)
-			return $this->rows[$index];
+		if(is_numeric($index) and $index>=0){
+		    if (isset($this->rows[$index])) {
+		        return $this->rows[$index];
+            } else {
+		        return null;
+            }
+        }
 		return $this->rows;
 	}
 
@@ -43,4 +48,27 @@ class DbStore {
 	public function getQueryString(){
 		return $this->query_string;
 	}
+
+
+	/**
+	 * Retorna la primera fila encontrada en la consulta
+	 *
+	 * @return Object Primer registro de query
+	 */
+	public function getFirst()
+	{
+		return isset($this->rows[0]) ? $this->rows[0] : null;
+	}
+
+
+	/**
+	 * Retorna la última fila encontrada en la consulta
+	 *
+	 * @return Object Ultimo registro de query
+	 */
+	public function getLast()
+	{
+		return isset($this->rows[($this->num_rows - 1)]) ? $this->rows[($this->num_rows - 1)] : null;
+	}
+
 }
