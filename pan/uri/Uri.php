@@ -18,6 +18,21 @@ class Uri
     }
 
 
+    public static function getHost()
+    {
+        self::$_port = '';
+        if ($_SERVER['SERVER_PORT'] != 80) {
+            self::$_port = ':' . $_SERVER['SERVER_PORT'];
+        }
+        $url	= $_SERVER['SERVER_NAME'] . self::$_port . $_SERVER['SCRIPT_NAME'];
+        $url	= explode('/', $url);
+        $tmp	= array_pop($url);
+        $url	= implode("/", $url);
+
+        return self::getUriProtocol() . $url . '/';
+    }
+
+
     /**
      * Obtiene la base de la url de la aplicación
      *
@@ -25,6 +40,7 @@ class Uri
      */
     public static function getBaseUri()
     {
+        
         self::$_port = '';
         if ($_SERVER['SERVER_PORT'] != 80) {
             self::$_port = ':' . $_SERVER['SERVER_PORT'];
@@ -48,7 +64,8 @@ class Uri
      */
     private static function getUriProtocol() 
     {
-        return  (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        return \Pan\Kore\App::getHttpProtocol() . '://';
+        //return  (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
     }
 
 }

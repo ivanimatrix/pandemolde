@@ -7,11 +7,13 @@ require "app/MigasApp.php";
 require "modules/MigasModule.php";
 require "controllers/MigasController.php";
 require "entities/MigasEntity.php";
+require "jobs/MigasJob.php";
 
 use Pan\Migas\App\MigasApp;
 use Pan\Migas\Entities\MigasEntity;
 use Pan\Migas\Modules\MigasModule;
 use Pan\Migas\Controllers\MigasController;
+use Pan\Migas\Jobs\MigasJob;
 
 
 class Migas {
@@ -111,6 +113,11 @@ class Migas {
             case 'controller' :
                 $migasController = new MigasController();
                 $migasController->make($this->_arguments);
+                break;
+
+            case 'job' :
+                $migasJob = new MigasJob();
+                $migasJob->make($this->_arguments);
                 break;
 
         }

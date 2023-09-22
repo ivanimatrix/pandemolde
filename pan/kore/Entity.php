@@ -22,6 +22,10 @@ class Entity{
 
     protected $_manyToMany = array();
 
+    protected $joins = array();
+
+    protected $arr_joins = array();
+
 
 	public function __construct($_entity=null){
         $this->db = new \Pan\Db\DbQueryBuilder();
@@ -322,6 +326,8 @@ class Entity{
 
         $query .= ' from ' . $this->table;
 
+        $query = $this->checkJoins($query);
+
         $params = array();
         if (is_array($where) and count($where) > 0) { 
             $query .= ' where ';
@@ -376,6 +382,8 @@ class Entity{
     {
         $query = "select * from " . $this->table;
 
+        $query = $this->checkJoins($query);
+
         if (!is_null($arguments)) {
             if (is_string($arguments)) {
                 $query .= ' ' . $arguments;
@@ -390,7 +398,9 @@ class Entity{
         if (!$pk)
             return null;
 
-        $query = 'select * from ' . $this->table . ' where ' . $this->primary_key . ' = ?  limit 1';
+        $query = 'select * from ' . $this->table;
+        $query = $this->checkJoins($query);
+        $query = $query . ' where ' . $this->primary_key . ' = ?  limit 1';
         return $this->db->getQuery($query, $pk)->runQuery()->getRows(0);
 
     }
@@ -403,6 +413,94 @@ class Entity{
         }
 
         return $this->db->getQuery($raw_query, $parameters)->runQuery()->getRows();
+    }
+
+
+    public function count($where = array()) {
+        $query = 'select count(*) as total from ' . $this->table;
+        $params = array();
+
+        if (is_array($where) and count($where) > 0) { 
+            $query .= ' where ';
+            $last_conn_log = 'and';
+            foreach ( $where as $field => $value) {
+                if (is_array($value)) {
+                    $val = $value[0];
+                    $cond = $value[1];
+                    $conn_log = 'and';
+                    if(isset($value[2])){
+                        $conn_log = $value[2];
+                    }
+                    /* $value = implode(',', $value);
+                    $query .= ' ' . $field . ' in ('.$value.') and'; */
+                    if(strtolower($cond) == "in" or strtolower($cond) == "not in"){
+                        if(is_array($val)){
+                            $val = implode(',', $val);
+                        }
+                        $query .= ' ' . $field . ' ' . $cond .' (' . $val. ') ' . $conn_log;
+                    }else{
+                        $query .= ' ' . $field . ' ' . $cond .' ? ' . $conn_log;
+			            $params[] = $val;
+                    }
+                    
+                    //$params[] = $val;
+                    $last_conn_log = $conn_log;
+                } else{
+                    $query .= ' ' . $field . ' = ? and';
+                    $params[] = $value;
+                    $last_conn_log = 'and';
+                }
+               
+                
+            }
+            $query = trim($query, $last_conn_log);
+            
+        }
+
+        return $this->db->getQuery($query, $params)->runQuery()->getRows(0)->total;
+
+    }
+
+
+     /**
+     * Agrega los joins definidos en la entidad
+     *
+     * @param string|array $alias
+     * @return this
+     */
+    public function join($alias = null)
+    {
+        if (is_string($alias)) {
+            if (isset($this->joins[$alias])) {
+                $this->arr_joins[] = $alias;
+            }
+        } elseif (is_array($alias)) {
+            if (count($alias) > 0) {
+                foreach ($alias as $a) {
+                    if (isset($this->joins[$a])) {
+                        $this->arr_joins[] = $a;
+                    }
+                }
+            }
+        }
+        
+
+        return $this;
+    }
+
+
+    private function checkJoins($query)
+    {
+        if (isset($this->arr_joins) and count($this->arr_joins) > 0) {
+            foreach ($this->arr_joins as $alias) {
+                if (is_string($this->joins[$alias])) {
+                    $query .= ' ' . $this->joins[$alias] . ' ';
+                } 
+            }
+            $this->arr_joins = array();
+        }
+
+        return $query;
     }
 
 }

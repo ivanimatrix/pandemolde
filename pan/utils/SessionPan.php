@@ -88,10 +88,21 @@ class SessionPan
     {
         $session_id = str_replace(' ', '', mb_strtolower(App::getName()));
         if (!isset($_SESSION[$session_id])) {
-            header('Location: ' . Uri::getHost());
+            header('Location: ' . \Pan\Uri\Uri::getBaseUri());
             die();
         }
 
+    }
+
+
+    public static function toArray()
+    {
+        $session_id = str_replace(' ', '', mb_strtolower(App::getName()));
+        if (isset($_SESSION[$session_id])) {
+            return $_SESSION[$session_id];
+        } else {
+            return null;
+        }
     }
 
 }

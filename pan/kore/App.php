@@ -27,8 +27,13 @@ class App {
 
     public static $view_debug = false;
 
+    private static $http_protocol;
+
+    private static $db_audit;
 
     private static $_app_config;
+
+    
 
     public function __construct($app_config)
     {
@@ -43,7 +48,8 @@ class App {
         self::$default_template = $app_config['app_default_template'];
         self::$salt = $app_config['app_salt'];
         self::$view_debug = $app_config['app_view_debug'];
-
+        self::$http_protocol = isset($app_config['app_http_protocol']) ? $app_config['app_http_protocol'] : 'http';
+        self::$db_audit = $app_config['app_db_audit'];
         self::$_app_config = $app_config;
     }
 
@@ -123,6 +129,24 @@ class App {
     public static function getDebugView()
     {
         return self::$view_debug;
+    }
+
+
+    public static function getHttpProtocol()
+    {
+        return self::$http_protocol;
+    }
+
+
+    public static function getEnvironment()
+    {
+        return self::$environment;
+    }
+
+
+    public static function getDbAudit()
+    {
+        return self::$db_audit;
     }
 
 }
