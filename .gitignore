@@ -1,5 +1,9 @@
 app
 app/*
+jobs
+jobs/*
+api
+api/*
 libs
 libs/*
 pub
