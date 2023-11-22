@@ -1,3 +1,3 @@
 RewriteEngine on
-RewriteCond $1 !^(index\.php|pub|store|tmp|api|jobs)
+RewriteCond $1 !^(index\.php|entities|pan|pub|libs|store|tmp|jobs)
 RewriteRule ^(.*)$ index.php/$1 [L]

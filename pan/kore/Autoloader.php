@@ -3,7 +3,6 @@ namespace Pan\Kore;
 
 const DS = DIRECTORY_SEPARATOR;
 
-require_once __DIR__ . '/../../app/app_database.php';
 require_once __DIR__ . '/App.php';
 require_once __DIR__ . '/../utils/SessionPan.php';
 require_once __DIR__ . '/../utils/ErrorPan.php';

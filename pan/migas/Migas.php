@@ -8,12 +8,14 @@ require "modules/MigasModule.php";
 require "controllers/MigasController.php";
 require "entities/MigasEntity.php";
 require "jobs/MigasJob.php";
+require "connections/MigasConnections.php";
 
 use Pan\Migas\App\MigasApp;
 use Pan\Migas\Entities\MigasEntity;
 use Pan\Migas\Modules\MigasModule;
 use Pan\Migas\Controllers\MigasController;
 use Pan\Migas\Jobs\MigasJob;
+use Pan\Migas\Connections\MigasConnections;
 
 
 class Migas {
@@ -120,6 +122,10 @@ class Migas {
                 $migasJob->make($this->_arguments);
                 break;
 
+            case 'connections' : 
+                $migasJob = new MigasConnections();
+                $migasJob->make($this->_arguments);
+                break;
         }
     }
 

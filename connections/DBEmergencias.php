@@ -1,10 +1,10 @@
 <?php
 
-namespace Pan\Db;
+namespace Connections;
 
 
 
-class DbConexion
+class DBEmergencias
 {
 
     private $conn = null;

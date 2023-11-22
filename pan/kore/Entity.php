@@ -6,6 +6,8 @@ class Entity{
 
 	protected $db;
 
+    protected $dbconexion;
+
 	protected $table;
 
 	protected $primary_key;
@@ -27,8 +29,18 @@ class Entity{
     protected $arr_joins = array();
 
 
-	public function __construct($_entity=null){
-        $this->db = new \Pan\Db\DbQueryBuilder();
+	public function __construct($_entity = null){
+        require __DIR__ . '/../../app/app_database.php'; 
+         
+        if ($this->dbconexion == '') {
+            $this->dbconexion = 'main';
+        }
+
+        if (!isset($app_database[$this->dbconexion])) {
+            \Pan\Utils\ErrorPan::_showErrorAndDie('ERROR DATABASE: No se ha definido conexión solicitada (' . $this->dbconexion . ')');
+        }
+
+        $this->db = new \Pan\Db\DbQueryBuilder($this->dbconexion);
         if(!is_null($_entity)){
             $this->setEntity($_entity);
         }
@@ -43,22 +55,23 @@ class Entity{
 	    return $this->table;
     }
 
+    public function getConnection()
+    {
+        return $this->dbconexion;
+    }
+
     /**
      * crear una instancia de la entidad para un registro específico
      * @param [type] $_entity [description]
      */
     public function setEntity($_entity){
         $this->_entity = $_entity;
-        $sql = 'select * from ' . $this->table . ' where ' . $this->primary_key . ' = ? ';
-        $result = $this->db->getQuery($sql, $this->_entity)->runQuery();
-        if ($result->getNumRows() == 1) {
-            $res = $result->getRows(0);
-            foreach($res as $field => $val) {
+        $result = $this->getByPK($_entity);
+        if ($result) {
+            foreach($result as $field => $val) {
                 $this->_fields[$field] = $val;
                 $this->{$field} = $val;
             }
-            
-            
         } else {
             $this->_entity = null;
         }
@@ -373,7 +386,7 @@ class Entity{
             }
 
         }
-
+        
         return $this->db->getQuery($query, $params);
     }
 
@@ -416,7 +429,7 @@ class Entity{
     }
 
 
-    public function count($where = array()) {
+    public function count($where = null, $parameters = null) {
         $query = 'select count(*) as total from ' . $this->table;
         $params = array();
 
@@ -455,6 +468,13 @@ class Entity{
             }
             $query = trim($query, $last_conn_log);
             
+        } else if (is_string($where)) {
+            $query .= ' where ' . $where; 
+            if (!is_null($parameters) and is_array($parameters) and count($parameters) > 0) {
+                foreach ($parameters as $value) {
+                    $params[] = $value;
+                }
+            }
         }
 
         return $this->db->getQuery($query, $params)->runQuery()->getRows(0)->total;

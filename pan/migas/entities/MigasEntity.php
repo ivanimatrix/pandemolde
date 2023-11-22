@@ -5,7 +5,7 @@ namespace pan\Migas\Entities;
 use Pan\Db\DBInfo;
 use Pan\Migas\Migas;
 
-require 'app/app_database.php';
+
 require 'pan/db/DbConexion.php';
 require 'pan/db/DbQueryBuilder.php';
 require 'pan/db/DbStore.php';
@@ -48,7 +48,6 @@ class MigasEntity extends Migas
                     }
                     $this->makeAll($prefix);
                 }
-                die;
 
                 //$entity_module = $entity[0];
                 $entity_class = $entity;
@@ -102,6 +101,7 @@ class MigasEntity extends Migas
 
     private function makeAll($prefix = null)
     {
+        require 'app/app_database.php';
         $_DBInfo = new \Pan\Db\DBInfo();
         $tables = $_DBInfo->getTables();
         

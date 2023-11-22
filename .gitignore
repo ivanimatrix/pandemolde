@@ -14,3 +14,5 @@ sql
 sql/*
 tmp
 tmp/*
+.idea
+.idea/*

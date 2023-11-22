@@ -8,6 +8,13 @@ class DbQueryBuilder
 
     protected $db;
 
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $dbname;
+
     protected $table;
 
     private $string_query;
@@ -36,10 +43,31 @@ class DbQueryBuilder
 
     private $params;
 
-    public function __construct()
-    {
+    public function __construct($connection = null)
+    {   
+
+        require __DIR__ . '/../../app/app_database.php';
+
+        if (is_null($connection) or !isset($app_database[$connection])) {
+            \Pan\Utils\ErrorPan::_showErrorAndDie('ERROR DATABASE: No se ha definido conexión');
+        }
         //$this->db = new \pan\Db\DbConexion();
-        $this->db = \Pan\Db\DbConexion::initConn();
+        if ($connection == 'main') {
+            $this->db = \Pan\Db\DbConexion::initConn($app_database[$connection]);
+        } else {
+            $file_connection = 'connections/DB' .  ucfirst($connection) . '.php';
+            if (!is_file($file_connection))
+                \Pan\Utils\ErrorPan::_showErrorAndDie('ERROR DATABASE : Archivo de conexion para ' . $connection . ' no encontrado');
+
+            require_once $file_connection;
+            $dbconnection = '\\connections\\DB' . ucfirst($connection);
+
+            $db_class = new $dbconnection;
+            $this->db = call_user_func_array(array($db_class, 'initConn'), array($app_database[$connection]));
+
+            //$this->db = \Pan\Db\DbConexion::initConn($app_database[$connection]);
+        }
+        //$this->db = \Pan\Db\DbConexion::initConn($connection);
     }
 
 
@@ -488,7 +516,7 @@ class DbQueryBuilder
             $ip = $_SERVER['REMOTE_ADDR'] . " - " . $ip;
             
             //$usuario = \pan\utils\SessionPan::getSession('id');
-            $usuario = $_SESSION['session_idUsuario'];
+            $usuario = \Pan\Utils\SessionPan::getSession('id');
 
             if($usuario == 0 or trim($usuario) == ""){
                 $usuario = 0;
@@ -496,7 +524,7 @@ class DbQueryBuilder
 
             if(trim(strtoupper($this->getTipoQuery($this->showQuery()))) != "SELECT"){
                 $tipo = $this->getTipoQuery($this->showQuery());
-                $insert_query_log = trim('insert into '.DB_PREFIX_AUDIT.'auditoria_'.date('Ym').'(id_usuario,fc_fecha,gl_query,gl_tipo,gl_tiempo,ip_usuario) values(?,?,?,?,?,?)');
+                $insert_query_log = trim('insert into '.DB_PREFIX_AUDIT.'auditoria_'.date('Y_m').'(id_usuario,fc_fecha,gl_query,gl_tipo,gl_tiempo,ip_usuario) values(?,?,?,?,?,?)');
                 $parameters_log = array(
                     $usuario,
                     date('Y-m-d H:i:s'),
