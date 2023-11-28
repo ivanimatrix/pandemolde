@@ -9,24 +9,22 @@
 
 $app_database = array(
     'main' => array(
-        /**
-         * DB_TYPE : Tipo de conexion
-         * - MYSQL > para motor MySQL
-         * - PGSQL > para motor PostgreSQL
-         * - MSSQL > para motor SQL Server
-         */
-        'DB_TYPE' => '',
-        /** host o IP servidor base de datos */
-        'DB_HOST' => '',
-        /** puerto de conexion */
-        'DB_PORT' => '',
-        /** nombre base de datos */
-        'DB_NAME' => '',
-        /** usuario de conexion  */
-        'DB_USER' => '',
-        /** password de conexion */
-        'DB_PASS' => '',
-        'DB_CHARSET' => '',
-        'DB_PREFIX' => '',
+        
+        'DB_TYPE' => '', /* motor base de datos usada en la aplicacion: MYSQL (para mysql), PGSQL (para postgresql), MSSQL (para sql server) */
+        
+        'DB_HOST' => '', /* host o IP servidor base de datos */
+        
+        'DB_PORT' => '', /* puerto de conexion */
+        
+        'DB_NAME' => '', /* nombre base de datos */
+        
+        'DB_USER' => '', /* usuario de conexion  */
+        
+        'DB_PASS' => '', /* password de conexion */
+
+        'DB_CHARSET' => '', /* charset indicado en la base de datos */
+
+        'DB_PREFIX' => '', /* prefijo que tienen los nombres de las tablas en base de datos, si es que se tiene */
+        
     )
 );

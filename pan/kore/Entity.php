@@ -6,7 +6,7 @@ class Entity{
 
 	protected $db;
 
-    protected $dbconexion;
+    protected $dbconnection;
 
 	protected $table;
 
@@ -29,20 +29,25 @@ class Entity{
     protected $arr_joins = array();
 
 
-	public function __construct($_entity = null){
-        require __DIR__ . '/../../app/app_database.php'; 
+	public function __construct($_entity = null, $_conn = null){
+        require 'app/app_database.php'; 
          
-        if ($this->dbconexion == '') {
-            $this->dbconexion = 'main';
+        if ($this->dbconnection == '') {
+            $this->dbconnection = 'main';
         }
 
-        if (!isset($app_database[$this->dbconexion])) {
-            \Pan\Utils\ErrorPan::_showErrorAndDie('ERROR DATABASE: No se ha definido conexión solicitada (' . $this->dbconexion . ')');
+        if (!is_null($_conn)) {
+            $this->dbconnection = $_conn;
         }
 
-        $this->db = new \Pan\Db\DbQueryBuilder($this->dbconexion);
+        if (!isset($app_database[$this->dbconnection])) {
+            \Pan\Utils\ErrorPan::_showErrorAndDie('ERROR DATABASE: No se ha definido conexión solicitada (' . $this->dbconnection . ')');
+        }
+
+        $this->db = new \Pan\Db\DbQueryBuilder($this->dbconnection);
         if(!is_null($_entity)){
-            $this->setEntity($_entity);
+            $this->table = $_entity;
+            //$this->setEntity($_entity);
         }
 	}
 
@@ -57,7 +62,7 @@ class Entity{
 
     public function getConnection()
     {
-        return $this->dbconexion;
+        return $this->dbconnection;
     }
 
     /**
@@ -122,7 +127,7 @@ class Entity{
             $insert .= "(".$fields.") values(".$values.")";
         }
 
-
+        error_log($insert);
         $return = $this->db->execQuery($insert,$parameters, $return_last_id);
         
         return $return;

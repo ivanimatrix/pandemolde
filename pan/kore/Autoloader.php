@@ -8,8 +8,6 @@ require_once __DIR__ . '/../utils/SessionPan.php';
 require_once __DIR__ . '/../utils/ErrorPan.php';
 require_once __DIR__ . '/../uri/Uri.php';
 require_once __DIR__ . '/../db/DbStore.php';
-require_once __DIR__ . '/../db/DbConexion.php';
-require_once __DIR__ . '/../db/DbConexionAudit.php';
 require_once __DIR__ . '/../db/DbQueryBuilder.php';
 require_once __DIR__ . '/../utils/panFunc.php';
 require_once __DIR__ . '/../utils/ValidatePan.php';

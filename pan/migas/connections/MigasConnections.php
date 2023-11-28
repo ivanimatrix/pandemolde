@@ -30,35 +30,46 @@ class MigasConnections extends Migas
 
                     if (isset($app_database)) {
                         foreach ($app_database as $conn => $data) {
-
-                            if ($conn !== 'main' and $conn !== 'audit') {
-                                $DBConnection = file_get_contents('pan/db/DbConexion.php');
-                                $DBConnection = str_replace(array('Pan\Db', 'DbConexion'), array('Connections', 'DB' . ucfirst($conn)), $DBConnection);
-                                $nameFile = 'DB' . ucfirst($conn) . '.php';
-                                $pathFile = 'connections' . DIRECTORY_SEPARATOR . $nameFile;
-                                if (!is_file($pathFile)) {
-                                    file_put_contents($pathFile, $DBConnection);
-                                    if (is_file($pathFile)) {
-                                        print " * Conexion " . $conn . " creada\n";
-                                    }
-                                }
+                            $DBConnectionContent = "<?php\nnamespace Connections;\n\n";
+                            $DBConnectionContent .= "require_once 'pan/db/connection/DBConnection.php';\n\n";
+                            $DBConnectionContent .= "class " . 'DB' . ucfirst($conn) . " extends \Pan\db\connection\DBConnection\n{\n\n";
+                            $DBConnectionContent .= "\t" . 'public function __construct($arr_connection)' . "\n\t{\n";
+                            $DBConnectionContent .= "\t\t" . 'parent::__construct($arr_connection);' . "\n\t}\n\n";
+                            
+                            if (mb_strtolower($conn) === 'audit') {
+                                $DBConnectionContent .= "\t" . 'public function register($time, $query){' . "\n\t\t// code ...\n\t}"; 
+                            }
                                 
+                            $DBConnectionContent .= "\n\n}";
+                            
+                            /* $DBConnection = file_get_contents('pan/db/DbConexion.php');
+                            $DBConnection = str_replace(array('Pan\Db', 'DbConexion'), array('Connections', 'DB' . ucfirst($conn)), $DBConnection); */
+                            $nameFile = 'DB' . ucfirst($conn) . '.php';
+                            $pathFile = 'connections' . DIRECTORY_SEPARATOR . $nameFile;
+                            if (!is_file($pathFile)) {
+                                file_put_contents($pathFile, $DBConnectionContent);
+                                if (is_file($pathFile)) {
+                                    print " * Conexion " . $conn . " creada\n";
+                                }
                             }
                         }
                     }
-                }
-
-                /* $path_job = 'jobs' . DIRECTORY_SEPARATOR . $job_class . '.php';
-                $f = fopen($path_job,'w');
-                fwrite($f,$content_job);
-                fclose($f);
-                if(is_file($path_job)){
-                    print "* Job ". $job_class . " creada\n";
-                }else{
-                    print "* Job ". $job_class . " no ha sido creada\n";
+                } /* elseif ($param === 'audit') {
+                    $DBConnection = file_get_contents('pan/db/DbConexion.php');
+                    $DBConnection = str_replace(array('Pan\Db', 'DbConexion', 'closeConn()', '$this->conn = null;'), array('Connections', 'DBAudit', 'register($time, $query)','// code for audit'), $DBConnection);
+                    $nameFile = 'DBAudit.php';
+                    $pathFile = 'connections' . DIRECTORY_SEPARATOR . $nameFile;
+                    if (!is_file($pathFile)) {
+                        file_put_contents($pathFile, $DBConnection);
+                        if (is_file($pathFile)) {
+                            $_app_database = file_get_contents('pan/app_database_audit.php.example');
+                            $a = file_put_contents('app/app_database_audit.php',$_app_database);
+                            print " * Conexion AUDITORIA creada\n";
+                        }
+                    }
                 } */
             } else {
-                print "* El formato para crear job es Entidad\n";
+                print "* Problemas para crear conexiones\n";
             }
         }
     }

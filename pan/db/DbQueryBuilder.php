@@ -43,31 +43,29 @@ class DbQueryBuilder
 
     private $params;
 
-    public function __construct($connection = null)
-    {   
+    private $conn;
 
-        require __DIR__ . '/../../app/app_database.php';
+    public function __construct($connection = null)
+    {
+
+        require 'app' . DIRECTORY_SEPARATOR . 'app_database.php';
 
         if (is_null($connection) or !isset($app_database[$connection])) {
             \Pan\Utils\ErrorPan::_showErrorAndDie('ERROR DATABASE: No se ha definido conexión');
         }
-        //$this->db = new \pan\Db\DbConexion();
-        if ($connection == 'main') {
-            $this->db = \Pan\Db\DbConexion::initConn($app_database[$connection]);
-        } else {
-            $file_connection = 'connections/DB' .  ucfirst($connection) . '.php';
-            if (!is_file($file_connection))
-                \Pan\Utils\ErrorPan::_showErrorAndDie('ERROR DATABASE : Archivo de conexion para ' . $connection . ' no encontrado');
 
-            require_once $file_connection;
-            $dbconnection = '\\connections\\DB' . ucfirst($connection);
+        $this->conn = $connection;
 
-            $db_class = new $dbconnection;
-            $this->db = call_user_func_array(array($db_class, 'initConn'), array($app_database[$connection]));
+        $file_connection = 'connections' . DIRECTORY_SEPARATOR . 'DB' .  ucfirst($connection) . '.php';
+        if (!is_file($file_connection))
+            \Pan\Utils\ErrorPan::_showErrorAndDie('ERROR DATABASE : Archivo de conexion para ' . $connection . ' no encontrado');
 
-            //$this->db = \Pan\Db\DbConexion::initConn($app_database[$connection]);
-        }
-        //$this->db = \Pan\Db\DbConexion::initConn($connection);
+
+        require_once $file_connection;
+        
+        $dbconnection = '\\connections\\DB' . ucfirst($connection);
+        $db_class = new $dbconnection($app_database[$connection]);
+        $this->db = call_user_func(array($db_class, 'initConn'), array($app_database[$connection]));
     }
 
 
@@ -80,20 +78,15 @@ class DbQueryBuilder
         if ($this->query === "")
             $this->query = "select ";
 
-        /*if (empty($this->string_query) and validatePan::isLiteral($fields))
-            $this->string_query = 'SELECT ' . $fields;*/
-
         if (\Pan\Utils\ValidatePan::isArray($fields)) {
             $fields_name = '';
             foreach ($fields as $field) {
                 $fields_name .= $field . ', ';
             }
             $fields = trim($fields_name, ', ');
-
         }
         $this->query = str_replace('*', $fields, $this->query);
         return $this->getQuery($this->query, $this->params);
-
     }
 
 
@@ -102,9 +95,7 @@ class DbQueryBuilder
 
         if ($this->select == "")
             $this->select = "SELECT ";
-        
-        /*if (empty($this->string_query) and validatePan::isLiteral($fields))
-            $this->string_query = 'SELECT ' . $fields;*/
+
 
         if (\Pan\Utils\ValidatePan::isArray($fields)) {
             $fields_name = '';
@@ -113,10 +104,9 @@ class DbQueryBuilder
             }
             $fields = trim($fields_name, ', ');
             $this->select .= $fields . ' ';
-
-        }elseif(is_string($fields)){
+        } elseif (is_string($fields)) {
             $this->select .= $fields . ' ';
-        }else{
+        } else {
             $this->select .= ' * ';
         }
     }
@@ -129,10 +119,10 @@ class DbQueryBuilder
             if (is_array($conditions)) {
                 $parameters = array();
                 foreach ($conditions as $field => $value) {
-                    if(is_array($value)){
+                    if (is_array($value)) {
                         $this->query .= $field . ' ' . $value[1] . ' ? and ';
                         $parameters[] = $value[0];
-                    }else{
+                    } else {
                         $this->query .= $field . ' = ? and ';
                         $parameters[] = $value;
                     }
@@ -165,11 +155,12 @@ class DbQueryBuilder
 
     public function limit($num_limit, $total = null)
     {
+        require __DIR__ . '/../../app/app_database.php';
         $total_limit = '';
         if (!is_null($total))
-            if (strtolower(DB_TYPE) === 'mysql')
+            if (strtolower($app_database[$this->conn]['DB_TYPE']) === 'mysql')
                 $total_limit = ',' . $total;
-            elseif (strtolower(DB_TYPE) === 'pgsql')
+            elseif (strtolower($app_database[$this->conn]['DB_TYPE']) === 'pgsql')
                 $total_limit = ' offset ' . $total;
 
         $this->query .= ' limit ' . $num_limit . $total_limit;
@@ -183,24 +174,23 @@ class DbQueryBuilder
      * @param  array $params    Arreglo con el campo involucrado en clausula WHERE, formato ['campo' => 'valor']
      * @param  string $condition Condicion para la clausula. Por defecto es '='
      */
-    public function where($con_logic,$params,$condition = '=')
+    public function where($con_logic, $params, $condition = '=')
     {
-        
-        if(empty($this->where)){
+
+        if (empty($this->where)) {
             $this->where = ' WHERE ';
-        }else{
+        } else {
             $this->where .= ' ' . strtoupper($con_logic);
         }
-        
-        if(is_array($params)){
+
+        if (is_array($params)) {
             $parameters = array();
             foreach ($params as $field => $value) {
-                $this->where .= ' ' . $field . ' ' .$condition. ' ? ';
+                $this->where .= ' ' . $field . ' ' . $condition . ' ? ';
                 //$parameters[] = $value;
                 $this->params[] = $value;
             }
         }
-        
     }
 
 
@@ -268,7 +258,7 @@ class DbQueryBuilder
         $this->params = $parameters;
 
         try {
-            
+
             $stmt = $this->db->prepare($query);
             $tiempo_inicial = microtime(true);
             if (!is_null($parameters)) {
@@ -283,25 +273,24 @@ class DbQueryBuilder
 
             $total_time = ((microtime(true) - $tiempo_inicial));
             $this->logAuditoria($total_time);
-            
+
             if ($stmt->rowCount() >= 0) {
-                if($return_last_id){
+                if ($return_last_id) {
                     $return = $this->db->lastInsertId();
                 } else {
                     $return = true;
                 }
-                
-                //$this->db->closeConn();
+
                 return $return;
             } else {
                 return null;
             }
         } catch (\PDOException $e) {
             error_log($e->getMessage());
-            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage()."<br><pre>".$query."</pre><br>");
+            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage() . "<br><pre>" . $query . "</pre><br>");
         } catch (\Exception $e) {
             error_log($e->getMessage());
-            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage()."<br><pre>".$query."</pre><br>");
+            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage() . "<br><pre>" . $query . "</pre><br>");
         }
     }
 
@@ -353,12 +342,9 @@ class DbQueryBuilder
         try {
             $store = new \Pan\Db\DbStore();
 
-            if(empty($this->query) or is_null($this->query))
+            if (empty($this->query) or is_null($this->query))
                 $this->query = $this->select . $this->from . $this->join . $this->where . $this->orderBy . $this->groupBy . $this->limit;
-            
-            
-            
-            //$stmt = $this->db->prepareQuery($this->query);
+
             $stmt = $this->db->prepare($this->query);
             $tiempo_inicial = microtime(true);
             if (!is_null($this->params)) {
@@ -372,37 +358,28 @@ class DbQueryBuilder
             }
             $total_time = ((microtime(true) - $tiempo_inicial));
 
-            /*if ($stmt->rowCount() === 1) {
-                $this->result = $stmt->fetch();
-            }else{
-                $this->result = $stmt->fetchAll();    
-            }*/
-            $this->result = $stmt->fetchAll(); 
+            $this->logAuditoria($total_time);
+            $this->result = $stmt->fetchAll();
             $store->setRows($this->result);
             $store->setNumRows($stmt->rowCount());
             $store->setQueryString($this->showQuery());
-            //$this->num_rows = $stmt->rowCount();
 
-
-
-            //return $stmt->fetchAll();
-            //
             $this->query = $this->select = $this->from = $this->join = $this->where = $this->orderBy = $this->groupBy = $this->limit = "";
             $this->params = null;
-            //$this->db->closeConn();
+
             return $store;
         } catch (\PDOException $e) {
-            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage()."<br><pre>".$this->showQuery()."</pre><br>");
+            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage() . "<br><pre>" . $this->showQuery() . "</pre><br>");
             return null;
         } catch (\Exception $e) {
-            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage()."<br><pre>".$this->showQuery()."</pre><br>");
+            \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage() . "<br><pre>" . $this->showQuery() . "</pre><br>");
             return null;
         }
-
     }
 
 
-    public function getLastId(){
+    public function getLastId()
+    {
         return $this->db->lastInsertId();
     }
 
@@ -410,63 +387,15 @@ class DbQueryBuilder
     public function getNumRows()
     {
         return $this->num_rows;
-        /*try {
-            $stmt = $this->db->prepareQuery($this->query);
-            if (!is_null($this->params)) {
-                if (is_array($this->params)) {
-                    $stmt->execute($this->params);
-                } else {
-                    $stmt->execute(array($this->params));
-                }
-            } else {
-                $stmt->execute();
-            }
-            $this->num_rows = $stmt->rowCount();
-            return $this->num_rows;
-        } catch (\PDOException $e) {
-            errorPan::_showErrorAndDie($e->getMessage());
-        } catch (\Exception $e) {
-            errorPan::_showErrorAndDie($e->getMessage());
-        }*/
-
     }
 
 
-    private function auditTable(){
-        /* query para crear o verificar si tabla existe */
-        $sufix = date('Ym');
-        if(strtolower(DB_TYPE_AUDIT) == 'pgsql'){
-            $query = 'CREATE TABLE IF NOT EXISTS '.DB_PREFIX_AUDIT.'audit_'.$sufix.' (
-                audit_id serial not null primary key,
-                audit_date timestamp without time zone not null,
-                audit_user varchar(10) null default 0,
-                audit_query text not null,
-                audit_time float not null,
-                audit_ip varchar(100) null
-            );';    
-        }elseif(strtolower(DB_TYPE_AUDIT) == 'mysql'){
-            $query = 'CREATE TABLE IF NOT EXISTS '.DB_PREFIX_AUDIT.'audit_'.$sufix.' (
-                audit_id serial not null primary key,
-                audit_date datetime not null,
-                audit_user varchar(10) null default 0,
-                audit_query text not null,
-                audit_time float not null,
-                audit_ip varchar(100) null
-            ) engine=INNODB default charset='.DB_CHARSET_AUDIT.' collate='.DB_COLLATE_AUDIT.' autoincrement=1;';    
-        }
+    protected function getTipoQuery($query)
+    {
 
-        return $query;
-
-        
-    }
-
-
-    protected function getTipoQuery($query) {
-
-        $tipo = substr(trim($query),0,6);
+        $tipo = substr(trim($query), 0, 6);
 
         return $tipo;
-
     }
 
 
@@ -487,61 +416,21 @@ class DbQueryBuilder
     }
 
 
-    public function logAuditoria($total_time){
-       
-        if(\Pan\Kore\App::getDbAudit() == true){
-            $fecha = date('Y-m-d H:i:s');
-            $ip = '';
-            if (isset($_SERVER["HTTP_CLIENT_IP"]))
-            {
-                $ip = $_SERVER["HTTP_CLIENT_IP"];
-            }
-            elseif (isset($_SERVER["HTTP_X_FORWARDED_FOR"]))
-            {
-                $ip = $_SERVER["HTTP_X_FORWARDED_FOR"];
-            }
-            elseif (isset($_SERVER["HTTP_X_FORWARDED"]))
-            {
-                $ip = $_SERVER["HTTP_X_FORWARDED"];
-            }
-            elseif (isset($_SERVER["HTTP_FORWARDED_FOR"]))
-            {
-                $ip = $_SERVER["HTTP_FORWARDED_FOR"];
-            }
-            elseif (isset($_SERVER["HTTP_FORWARDED"]))
-            {
-                $ip = $_SERVER["HTTP_FORWARDED"];
-            }
+    public function logAuditoria($total_time)
+    {
 
-            $ip = $_SERVER['REMOTE_ADDR'] . " - " . $ip;
-            
-            //$usuario = \pan\utils\SessionPan::getSession('id');
-            $usuario = \Pan\Utils\SessionPan::getSession('id');
+        if (\Pan\Kore\App::getDbAudit() == true and $this->conn !== 'audit') {
 
-            if($usuario == 0 or trim($usuario) == ""){
-                $usuario = 0;
+            if (is_file('connections' . DIRECTORY_SEPARATOR . 'DBAudit.php') and is_file('app/app_database.php')) {
+                error_log($this->conn);
+                require_once 'connections' . DIRECTORY_SEPARATOR . 'DBAudit.php';
+                require 'app/app_database.php';
+
+                if (isset($app_database['audit'])) {
+                    $audit_conn = new \Connections\DBAudit($app_database['audit']);
+                    $audit_conn->register($total_time, $this->showQuery());
+                }
             }
-
-            if(trim(strtoupper($this->getTipoQuery($this->showQuery()))) != "SELECT"){
-                $tipo = $this->getTipoQuery($this->showQuery());
-                $insert_query_log = trim('insert into '.DB_PREFIX_AUDIT.'auditoria_'.date('Y_m').'(id_usuario,fc_fecha,gl_query,gl_tipo,gl_tiempo,ip_usuario) values(?,?,?,?,?,?)');
-                $parameters_log = array(
-                    $usuario,
-                    date('Y-m-d H:i:s'),
-                    trim($this->showQuery()),
-                    mb_strtoupper($tipo),
-                    $total_time,
-                    $ip
-                );
-                $db_auditoria = \Pan\Db\DbConexionAudit::initConn();
-                $stmt_auditoria = $db_auditoria->prepare($insert_query_log);
-                
-                $stmt_auditoria->execute($parameters_log);
-                $db_auditoria = null;
-            }
-        } 
-			
-		
-	} 
-
+        }
+    }
 }
