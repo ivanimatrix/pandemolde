@@ -3,7 +3,8 @@
 namespace Pan\Kore;
 
 
-class App {
+class App
+{
 
     public static $environment;
 
@@ -33,7 +34,12 @@ class App {
 
     private static $_app_config;
 
-    
+
+    private static $env_file = '';
+
+    private static $app_path_404 = '';
+
+
 
     public function __construct($app_config)
     {
@@ -51,6 +57,9 @@ class App {
         self::$http_protocol = isset($app_config['app_http_protocol']) ? $app_config['app_http_protocol'] : 'http';
         self::$db_audit = $app_config['app_db_audit'];
         self::$_app_config = $app_config;
+        self::$env_file = $app_config['app_env_file'];
+        self::$app_path_404 = $app_config['app_path_404'];
+
     }
 
 
@@ -61,7 +70,19 @@ class App {
     public function init()
     {
         try {
-            return \Pan\Kore\Bootstrap::run();
+
+            // carga de .env
+            if (!empty(self::$env_file)) {
+                \Pan\Utils\EnvPan::load(self::$env_file);
+            }
+            
+            // verificar si en url viene el modulo Login para usar con clave unica, entonces cargar antiguo Request y Bootstrap
+            if (strpos($_SERVER['REQUEST_URI'], 'index.php/Login') !== false || strpos($_SERVER['REQUEST_URI'], '/Login/procesarClaveUnica') !== false) {
+                return \Pan\Kore\BootstrapOld::run(new \Pan\Kore\RequestOld);
+            } else {
+                return \Pan\Kore\Bootstrap::run();
+            }
+            
         } catch (\Exception $e) {
             if (self::$view_debug == true) {
                 \Pan\Utils\ErrorPan::_showErrorAndDie($e->getMessage());
@@ -147,6 +168,12 @@ class App {
     public static function getDbAudit()
     {
         return self::$db_audit;
+    }
+
+
+    public static function getPath404()
+    {
+        return self::$app_path_404;
     }
 
 }

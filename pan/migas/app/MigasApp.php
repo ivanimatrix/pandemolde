@@ -13,7 +13,6 @@ class MigasApp extends Migas {
         'app',
         'entities',
         'libs',
-        'connections',
         'store',
         'api',
         'jobs',
@@ -22,7 +21,7 @@ class MigasApp extends Migas {
         'tmp' => array('logs','cache')
     );
 
-    protected static $_folders_htaccess = array('app','entities','libs','store','sql','connections');
+    protected static $_folders_htaccess = array('app','entities','libs','store','sql');
 
     protected static $_htaccess_content = 'Deny from all';
 

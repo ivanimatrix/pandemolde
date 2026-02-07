@@ -2,15 +2,16 @@
 namespace Pan\Kore;
 
 
-class Entity{
+class Entity
+{
 
-	protected $db;
+    protected $db;
 
-    protected $dbconnection;
+    protected $dbconexion;
 
-	protected $table;
+    protected $table;
 
-	protected $primary_key;
+    protected $primary_key;
 
     protected $_entity = null;
 
@@ -29,58 +30,57 @@ class Entity{
     protected $arr_joins = array();
 
 
-	public function __construct($_entity = null, $_conn = null){
-        require 'app/app_database.php'; 
-         
-        if ($this->dbconnection == '') {
-            $this->dbconnection = 'main';
+    public function __construct($_entity = null)
+    {
+        require __DIR__ . '/../../app/app_database.php';
+
+        if ($this->dbconexion == '') {
+            $this->dbconexion = 'main';
         }
 
-        if (!is_null($_conn)) {
-            $this->dbconnection = $_conn;
+        if (!isset($app_database[$this->dbconexion])) {
+            \Pan\Utils\ErrorPan::_showErrorAndDie('ERROR DATABASE: No se ha definido conexión solicitada (' . $this->dbconexion . ')');
         }
 
-        if (!isset($app_database[$this->dbconnection])) {
-            \Pan\Utils\ErrorPan::_showErrorAndDie('ERROR DATABASE: No se ha definido conexión solicitada (' . $this->dbconnection . ')');
+        $this->db = new \Pan\Db\DbQueryBuilder($this->dbconexion);
+        if (!is_null($_entity)) {
+            $this->setEntity($_entity);
         }
-
-        $this->db = new \Pan\Db\DbQueryBuilder($this->dbconnection);
-        if(!is_null($_entity)){
-            $this->table = $_entity;
-            //$this->setEntity($_entity);
-        }
-	}
-
-
-	public function getPrimaryKey(){
-	    return $this->primary_key;
     }
 
-    public function getTable(){
-	    return $this->table;
+
+    public function getPrimaryKey()
+    {
+        return $this->primary_key;
+    }
+
+    public function getTable()
+    {
+        return $this->table;
     }
 
     public function getConnection()
     {
-        return $this->dbconnection;
+        return $this->dbconexion;
     }
 
     /**
      * crear una instancia de la entidad para un registro específico
      * @param [type] $_entity [description]
      */
-    public function setEntity($_entity){
+    public function setEntity($_entity)
+    {
         $this->_entity = $_entity;
         $result = $this->getByPK($_entity);
         if ($result) {
-            foreach($result as $field => $val) {
+            foreach ($result as $field => $val) {
                 $this->_fields[$field] = $val;
                 $this->{$field} = $val;
             }
         } else {
             $this->_entity = null;
         }
-        
+
     }
 
 
@@ -95,12 +95,13 @@ class Entity{
      * @param  string $field nombre del campo que se desea obtener. Si se omite, el retorno correspondera a todos los campos asociados a la entidad instanciada
      * @return [type]        [description]
      */
-    public function get($field = null){
-        if(!is_null($field)){
+    public function get($field = null)
+    {
+        if (!is_null($field)) {
             if (isset($this->_fields[$field])) {
                 return $this->_fields[$field];
-            } 
-        }else{
+            }
+        } else {
             $sql = 'select * from ' . $this->table . ' where ' . $this->primary_key . ' = ? ';
             $result = $this->db->getQuery($sql, $this->_entity)->runQuery();
             if ($result->getNumRows() == 1) {
@@ -111,45 +112,47 @@ class Entity{
     }
 
 
-	public function create($parametros, $return_last_id = true){
+    public function create($parametros, $return_last_id = true)
+    {
 
-        $insert = "insert into ".$this->table;
+        $insert = "insert into " . $this->table;
         $fields = "";
         $values = "";
-        if(is_array($parametros)){
-            foreach($parametros as $field => $value){
-                $fields .= $field.",";
+        if (is_array($parametros)) {
+            foreach ($parametros as $field => $value) {
+                $fields .= $field . ",";
                 $values .= "?,";
                 $parameters[] = $value;
             }
-            $fields = trim($fields,",");
-            $values = trim($values,",");
-            $insert .= "(".$fields.") values(".$values.")";
+            $fields = trim($fields, ",");
+            $values = trim($values, ",");
+            $insert .= "(" . $fields . ") values(" . $values . ")";
         }
 
-        error_log($insert);
-        $return = $this->db->execQuery($insert,$parameters, $return_last_id);
-        
+
+        $return = $this->db->execQuery($insert, $parameters, $return_last_id);
+
         return $return;
-	}
+    }
 
 
-	public function update($parametros, $pk = null, $conditions=null){
+    public function update($parametros, $pk = null, $conditions = null)
+    {
         $parameters = array();
-        $update = "update ".$this->table." set ";
-        if(is_array($parametros)){
-            foreach($parametros as $field => $value){
-                $update .= $field ." = ?, ";
+        $update = "update " . $this->table . " set ";
+        if (is_array($parametros)) {
+            foreach ($parametros as $field => $value) {
+                $update .= $field . " = ?, ";
                 $parameters[] = $value;
             }
-            $update = trim($update,", ");
+            $update = trim($update, ", ");
         }
 
-        if(is_null($conditions)){
-            $update .= ' where '.$this->primary_key.' = ?';
+        if (is_null($conditions)) {
+            $update .= ' where ' . $this->primary_key . ' = ?';
             $parameters[] = $pk;
-        }else{
-            if(is_array($conditions)) {
+        } else {
+            if (is_array($conditions)) {
                 $update .= " where ";
                 foreach ($conditions as $c => $v) {
                     $update .= ' ' . $c . ' = ? and';
@@ -160,170 +163,14 @@ class Entity{
                 $update .= " where $conditions";
             }
 
-		}
-
-        return $this->db->execQuery($update,$parameters);
-	}
-
-
-	public function read($fields="*"){
-        $query = "select ";
-        if(empty($fields) or is_null($fields))
-            $fields = '*';
-        
-
-        if(is_null($fields)){
-            $fields = '*';
-        }else{
-            if(\pan\Utils\ValidatePan::isArray($fields)){
-                foreach($fields as $field){
-                    $query .= $field.', ';
-                }
-                $query = trim($query,', ');
-            }elseif(\pan\Utils\ValidatePan::isLiteral($fields)){
-                $query .= $fields.' ';
-            }
         }
 
-        $query .= ' from '. $this->table;
-        return $this->db->getQuery($query);
-	}
-
-
-	public function delete($parametros, $conditions=null){
-        $parameters = array();
-        $delete = "delete from ".$this->table. " where ";
-        if(is_array($parametros)){
-            foreach($parametros as $field => $value){
-                $delete .= $field ." = ? AND ";
-                $parameters[] = $value;
-            }
-            $delete = trim($delete,"AND ");
-        }
-
-        /*if(is_null($conditions)){
-            $update .= ' where '.$this->primary_key.' = ?';
-            $parameters[] = $pk;
-        }*/
-
-        return $this->db->execQuery($delete,$parameters);
-	}
-
-    /**
-     * @param $pk_other_table nombre de campo PK en tabla relacionada
-     * @param $name_other_table nombre de tabla relacionada
-     * @param $fk nombre de campo interno que se relaciona con otra tabla
-     * @param $mandatoria valor booleano para indicar si la relacion es obligatoria(TRUE) o no
-     * @return $this
-     */
-    public function hasOneToOne($pk_other_table,$name_other_table,$fk,$mandatoria=false){
-
-        if(!is_null($this->_entity)){
-            $sql = 'SELECT a.* from ' .$name_other_table. ' a ';
-            if($mandatoria){
-                $sql .= ' inner join ' . $this->table . ' b on a.' . $pk_other_table . ' = b.' . $fk;
-            }else{
-                $sql .= ' left join ' . $this->table . ' b on a.' . $pk_other_table . ' = b.' . $fk;
-            }
-
-            $sql .= ' where b.'. $this->primary_key .' = ? ';
-            $params = array($this->_entity);
-
-            $result = $this->db->getQuery($sql,$params)->runQuery();
-        }else{
-            $sql = 'select * from ' . $this->table . ' a ';
-            
-            if($mandatoria){
-                $sql .= ' inner join ' . $name_other_table . ' b on a.' . $pk_other_table . ' = b.' . $fk;
-            }else{
-                $sql .= ' left join ' . $name_other_table . ' b on a.' . $pk_other_table . ' = b.' . $fk;
-            }
-            
-
-            $result = $this->db->getQuery($sql)->runQuery();
-
-
-        }
-
-        if($result->getNumRows() > 1 ){
-            return $result->getRows();
-        }elseif($result->getNumRows() == 1){
-            return $result->getRows(0);
-        }else{
-            return null;
-        }
-        
-       
-    }
-
-    /**
-     * @param $pk_other_table nombre de campo PK en tabla relacionada
-     * @param $name_other_table nombre de tabla relacionada
-     * @param $fk nombre de campo interno que se relaciona con otra tabla
-     * @param $mandatoria valor booleano para indicar si la relacion es obligatoria(TRUE) o no
-     * @return $this
-     */
-    public function hasOneToMany($pk_other_table,$name_other_table,$fk,$mandatoria=false){
-        return $this->hasOneToOne($pk_other_table,$name_other_table,$fk,$mandatoria);
+        return $this->db->execQuery($update, $parameters);
     }
 
 
-    /**
-     * @param $table_many tabla que se genera de la relacion muchos a muchos
-     * @param $arr_entities arreglo con las entidades y campo que se relaciona en $table_many. Ej.: array('Entidad A'=>'campoA','Entidad B'=>'campoB')
-     * @return $this
-     */
-    public function hasManyToMany($table_many,$arr_entities, $new_pk = null){
-        $loader = new \pan\Loader();
-        $inner = '';
-        
-        if(is_array($arr_entities)){
-            foreach($arr_entities as $entity => $pk){
-                $a = $loader->entity($entity);
-                $inner .= ' inner join ' . $a->getTable() . ' b on b.' . $a->getPrimaryKey() . ' = a.' . $pk;
-
-            }
-        }
-        $sql = 'select * from ' . $table_many . ' a '. $inner;
-
-        if(!is_null($this->_entity)){
-            $params = null;
-            $_pk = $this->primary_key;
-            if (!is_null($new_pk)) {
-                $_pk = $new_pk;
-            }
-            $sql .= ' where a.' . $_pk.' = ? ';
-            $params = array($this->_entity);
-            return $this->db->getQuery($sql,$params)->runQuery()->getRows();
-        }else{
-            return $this->db->getQuery($sql);
-        }
-
-    }
-
-
-    /**
-     * verifica si existe un registro con un valor para un campo especifico
-     * @param  array $arr_field Arreglo de la forma ['campo' => 'valor']
-     * @return boolean           Retorna true si existe algun registro con el valor consultado, o false en caso contrario
-     */
-    public function unique($arr_field){
-        if(!is_array($arr_field))
-            return null;
-
-        $query = "select count(".key($arr_field).") as total from ".$this->table. " where ".key($arr_field)." = ? ";
-        $result = $this->db->getQuery($query,$arr_field[key($arr_field)])->runQuery()->getRows(0)->total;
-        if($result == 1){
-            return true;
-        }else{
-            return false;
-        }
-    }
-
-
-    public function where($where = array(), $parameters = null)
+    public function read($fields = "*")
     {
-
         $query = "select ";
         if (empty($fields) or is_null($fields))
             $fields = '*';
@@ -343,45 +190,207 @@ class Entity{
         }
 
         $query .= ' from ' . $this->table;
+        return $this->db->getQuery($query);
+    }
+
+
+    public function delete($parametros, $conditions = null)
+    {
+        $parameters = array();
+        $delete = "delete from " . $this->table . " where ";
+        if (is_array($parametros)) {
+            foreach ($parametros as $field => $value) {
+                $delete .= $field . " = ? AND ";
+                $parameters[] = $value;
+            }
+            $delete = trim($delete, "AND ");
+        }
+
+        /*if(is_null($conditions)){
+            $update .= ' where '.$this->primary_key.' = ?';
+            $parameters[] = $pk;
+        }*/
+
+        return $this->db->execQuery($delete, $parameters);
+    }
+
+    /**
+     * @param $pk_other_table nombre de campo PK en tabla relacionada
+     * @param $name_other_table nombre de tabla relacionada
+     * @param $fk nombre de campo interno que se relaciona con otra tabla
+     * @param $mandatoria valor booleano para indicar si la relacion es obligatoria(TRUE) o no
+     * @return $this
+     */
+    public function hasOneToOne($pk_other_table, $name_other_table, $fk, $mandatoria = false)
+    {
+
+        if (!is_null($this->_entity)) {
+            $sql = 'SELECT a.* from ' . $name_other_table . ' a ';
+            if ($mandatoria) {
+                $sql .= ' inner join ' . $this->table . ' b on a.' . $pk_other_table . ' = b.' . $fk;
+            } else {
+                $sql .= ' left join ' . $this->table . ' b on a.' . $pk_other_table . ' = b.' . $fk;
+            }
+
+            $sql .= ' where b.' . $this->primary_key . ' = ? ';
+            $params = array($this->_entity);
+
+            $result = $this->db->getQuery($sql, $params)->runQuery();
+        } else {
+            $sql = 'select * from ' . $this->table . ' a ';
+
+            if ($mandatoria) {
+                $sql .= ' inner join ' . $name_other_table . ' b on a.' . $pk_other_table . ' = b.' . $fk;
+            } else {
+                $sql .= ' left join ' . $name_other_table . ' b on a.' . $pk_other_table . ' = b.' . $fk;
+            }
+
+
+            $result = $this->db->getQuery($sql)->runQuery();
+
+
+        }
+
+        if ($result->getNumRows() > 1) {
+            return $result->getRows();
+        } elseif ($result->getNumRows() == 1) {
+            return $result->getRows(0);
+        } else {
+            return null;
+        }
+
+
+    }
+
+    /**
+     * @param $pk_other_table nombre de campo PK en tabla relacionada
+     * @param $name_other_table nombre de tabla relacionada
+     * @param $fk nombre de campo interno que se relaciona con otra tabla
+     * @param $mandatoria valor booleano para indicar si la relacion es obligatoria(TRUE) o no
+     * @return $this
+     */
+    public function hasOneToMany($pk_other_table, $name_other_table, $fk, $mandatoria = false)
+    {
+        return $this->hasOneToOne($pk_other_table, $name_other_table, $fk, $mandatoria);
+    }
+
+
+    /**
+     * @param $table_many tabla que se genera de la relacion muchos a muchos
+     * @param $arr_entities arreglo con las entidades y campo que se relaciona en $table_many. Ej.: array('Entidad A'=>'campoA','Entidad B'=>'campoB')
+     * @return $this
+     */
+    public function hasManyToMany($table_many, $arr_entities, $new_pk = null)
+    {
+        $loader = new \pan\Loader();
+        $inner = '';
+
+        if (is_array($arr_entities)) {
+            foreach ($arr_entities as $entity => $pk) {
+                $a = $loader->entity($entity);
+                $inner .= ' inner join ' . $a->getTable() . ' b on b.' . $a->getPrimaryKey() . ' = a.' . $pk;
+
+            }
+        }
+        $sql = 'select * from ' . $table_many . ' a ' . $inner;
+
+        if (!is_null($this->_entity)) {
+            $params = null;
+            $_pk = $this->primary_key;
+            if (!is_null($new_pk)) {
+                $_pk = $new_pk;
+            }
+            $sql .= ' where a.' . $_pk . ' = ? ';
+            $params = array($this->_entity);
+            return $this->db->getQuery($sql, $params)->runQuery()->getRows();
+        } else {
+            return $this->db->getQuery($sql);
+        }
+
+    }
+
+
+    /**
+     * verifica si existe un registro con un valor para un campo especifico
+     * @param  array $arr_field Arreglo de la forma ['campo' => 'valor']
+     * @return boolean           Retorna true si existe algun registro con el valor consultado, o false en caso contrario
+     */
+    public function unique($arr_field)
+    {
+        if (!is_array($arr_field))
+            return null;
+
+        $query = "select count(" . key($arr_field) . ") as total from " . $this->table . " where " . key($arr_field) . " = ? ";
+        $result = $this->db->getQuery($query, $arr_field[key($arr_field)])->runQuery()->getRows(0)->total;
+        if ($result == 1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+    public function where($where = array(), $parameters = null, $other_parameters = null)
+    {
+
+        $query = "select ";
+        if (empty($this->_queryable) or is_null($this->_queryable))
+            $query .= '*';
+
+
+        if (is_null($this->_queryable) or count($this->_queryable) == 0) {
+            $query = 'select *';
+        } else {
+            if (\pan\Utils\ValidatePan::isArray($this->_queryable)) {
+                foreach ($this->_queryable as $field) {
+                    $query .= $field . ', ';
+                }
+                $query = trim($query, ', ');
+            } elseif (\pan\Utils\ValidatePan::isLiteral($this->_queryable)) {
+                $query .= $this->_queryable . ' ';
+            }
+        }
+
+        $query .= ' from ' . $this->table;
 
         $query = $this->checkJoins($query);
 
         $params = array();
-        if (is_array($where) and count($where) > 0) { 
+        if (is_array($where) and count($where) > 0) {
             $query .= ' where ';
             $last_conn_log = 'and';
-            foreach ( $where as $field => $value) {
+            foreach ($where as $field => $value) {
                 if (is_array($value)) {
                     $val = $value[0];
                     $cond = $value[1];
                     $conn_log = 'and';
-                    if(isset($value[2])){
+                    if (isset($value[2])) {
                         $conn_log = $value[2];
                     }
                     /* $value = implode(',', $value);
                     $query .= ' ' . $field . ' in ('.$value.') and'; */
-                    if(strtolower($cond) == "in" or strtolower($cond) == "not in"){
-                        if(is_array($val)){
+                    if (strtolower($cond) == "in" or strtolower($cond) == "not in") {
+                        if (is_array($val)) {
                             $val = implode(',', $val);
                         }
-                        $query .= ' ' . $field . ' ' . $cond .' (' . $val. ') ' . $conn_log;
-                    }else{
-                        $query .= ' ' . $field . ' ' . $cond .' ? ' . $conn_log;
-			            $params[] = $val;
+                        $query .= ' ' . $field . ' ' . $cond . ' (' . $val . ') ' . $conn_log;
+                    } else {
+                        $query .= ' ' . $field . ' ' . $cond . ' ? ' . $conn_log;
+                        $params[] = $val;
                     }
-                    
+
                     //$params[] = $val;
                     $last_conn_log = $conn_log;
-                } else{
+                } else {
                     $query .= ' ' . $field . ' = ? and';
                     $params[] = $value;
                     $last_conn_log = 'and';
                 }
-               
-                
+
+
             }
             $query = trim($query, $last_conn_log);
-            
+
         } elseif (is_string($where)) {
             if (!is_null($parameters)) {
                 $query .= ' where ' . $where;
@@ -391,7 +400,14 @@ class Entity{
             }
 
         }
-        
+
+        // se valida si la consulta viene con otros parametros para agregar a la query final
+        if (!is_null($other_parameters)) {
+            if (is_string($other_parameters)) {
+                $query .= ' ' . $other_parameters;
+            }
+        }
+
         return $this->db->getQuery($query, $params);
     }
 
@@ -412,7 +428,8 @@ class Entity{
     }
 
 
-    public function getByPK($pk) {
+    public function getByPK($pk)
+    {
         if (!$pk)
             return null;
 
@@ -423,7 +440,7 @@ class Entity{
 
     }
 
-    
+
     public function raw($raw_query = null, $parameters = null)
     {
         if (is_null($raw_query)) {
@@ -434,47 +451,48 @@ class Entity{
     }
 
 
-    public function count($where = null, $parameters = null) {
+    public function count($where = null, $parameters = null)
+    {
         $query = 'select count(*) as total from ' . $this->table;
         $params = array();
 
-        if (is_array($where) and count($where) > 0) { 
+        if (is_array($where) and count($where) > 0) {
             $query .= ' where ';
             $last_conn_log = 'and';
-            foreach ( $where as $field => $value) {
+            foreach ($where as $field => $value) {
                 if (is_array($value)) {
                     $val = $value[0];
                     $cond = $value[1];
                     $conn_log = 'and';
-                    if(isset($value[2])){
+                    if (isset($value[2])) {
                         $conn_log = $value[2];
                     }
                     /* $value = implode(',', $value);
                     $query .= ' ' . $field . ' in ('.$value.') and'; */
-                    if(strtolower($cond) == "in" or strtolower($cond) == "not in"){
-                        if(is_array($val)){
+                    if (strtolower($cond) == "in" or strtolower($cond) == "not in") {
+                        if (is_array($val)) {
                             $val = implode(',', $val);
                         }
-                        $query .= ' ' . $field . ' ' . $cond .' (' . $val. ') ' . $conn_log;
-                    }else{
-                        $query .= ' ' . $field . ' ' . $cond .' ? ' . $conn_log;
-			            $params[] = $val;
+                        $query .= ' ' . $field . ' ' . $cond . ' (' . $val . ') ' . $conn_log;
+                    } else {
+                        $query .= ' ' . $field . ' ' . $cond . ' ? ' . $conn_log;
+                        $params[] = $val;
                     }
-                    
+
                     //$params[] = $val;
                     $last_conn_log = $conn_log;
-                } else{
+                } else {
                     $query .= ' ' . $field . ' = ? and';
                     $params[] = $value;
                     $last_conn_log = 'and';
                 }
-               
-                
+
+
             }
             $query = trim($query, $last_conn_log);
-            
+
         } else if (is_string($where)) {
-            $query .= ' where ' . $where; 
+            $query .= ' where ' . $where;
             if (!is_null($parameters) and is_array($parameters) and count($parameters) > 0) {
                 foreach ($parameters as $value) {
                     $params[] = $value;
@@ -487,7 +505,7 @@ class Entity{
     }
 
 
-     /**
+    /**
      * Agrega los joins definidos en la entidad
      *
      * @param string|array $alias
@@ -508,7 +526,7 @@ class Entity{
                 }
             }
         }
-        
+
 
         return $this;
     }
@@ -520,12 +538,27 @@ class Entity{
             foreach ($this->arr_joins as $alias) {
                 if (is_string($this->joins[$alias])) {
                     $query .= ' ' . $this->joins[$alias] . ' ';
-                } 
+                }
             }
             $this->arr_joins = array();
         }
 
         return $query;
+    }
+
+
+    public function fields($_fields = null)
+    {
+        if (is_array($_fields)) {
+            foreach ($_fields as $field) {
+                $this->_queryable[] = $field;
+            }
+        } elseif (is_string($_fields)) {
+            $this->_queryable[] = $_fields;
+
+        }
+
+        return $this;
     }
 
 }

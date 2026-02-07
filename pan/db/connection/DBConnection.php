@@ -82,10 +82,10 @@ class DBConnection
             if (!isset(self::$instance[$class])) {
                 self::$instance[$class] = new \PDO($conn_string, $this->dbuser, $this->dbpass, $conn_options);
                 $returnValue = self::$instance[$class];
-                echo 'nueva instancia ' . $class;
+                
             } else {
                 $returnValue = self::$instance[$class];
-                echo ' misma instancia ' . $class;
+                
             }
             $this->dbconn = $returnValue;
             

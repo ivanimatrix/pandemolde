@@ -13,6 +13,7 @@ abstract class Controller {
     protected $request;
     protected $session;
     protected $response;
+    protected $load;
 
 
 

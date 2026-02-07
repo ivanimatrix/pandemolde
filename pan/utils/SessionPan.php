@@ -56,9 +56,10 @@ class SessionPan
         if($param){
             unset($_SESSION[$session_id][$param]);
         }else{
+            $_SESSION = [];
             session_destroy();
-        }
 
+        }
     }
 
 
@@ -84,12 +85,28 @@ class SessionPan
     }
 
 
-    public static function isValidate()
+    public static function isValidate($key = null)
     {
         $session_id = str_replace(' ', '', mb_strtolower(App::getName()));
         if (!isset($_SESSION[$session_id])) {
             header('Location: ' . \Pan\Uri\Uri::getBaseUri());
             die();
+        }
+
+        if (!is_null($key) && !isset($_SESSION[$session_id][$key])) {
+            header('Location: ' . \Pan\Uri\Uri::getBaseUri());
+            die();
+        }
+
+        $is_valid = (time() - $_SESSION[$session_id]['last_activity'] < MAX_TIME_SESSION);
+
+        if (!$is_valid) {
+            self::sessionKill();
+            header('Location: ' . \Pan\Uri\Uri::getBaseUri());
+            die();
+        } else {
+            $_SESSION[$session_id]['last_activity'] = time();
+            session_write_close();
         }
 
     }
@@ -103,6 +120,14 @@ class SessionPan
         } else {
             return null;
         }
+    }
+
+
+
+    public static function isActive()
+    {
+        $session_id = str_replace(' ', '', mb_strtolower(App::getName()));
+        return isset($_SESSION[$session_id]);
     }
 
 }

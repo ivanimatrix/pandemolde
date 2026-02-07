@@ -62,13 +62,25 @@ $app_config = array(
     'app_view_debug' => true,
 
     /**
-     * Habilitar registro de auditorias de querys
+     * Define ubicación para almacenar y guardar ficheros dentro de la aplicación
+     */
+    'app_storage' => 'store',
+
+    /**
+     * Definir protocolo HTTP (http o https)
+     */
+    'app_http_protocol' => 'http',
+
+
+    /**
+     * Habilitar auditoria de querys
      */
     'app_db_audit' => false,
 
+
     /**
-     * Define ubicación para almacenar y guardar ficheros dentro de la aplicación
+     * Ruta del archivo .env
      */
-    'app_storage' => 'store'
+    'app_env_file' => '',
 
 );

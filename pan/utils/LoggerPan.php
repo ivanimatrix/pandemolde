@@ -13,7 +13,7 @@ class LoggerPan
     const LOG_WARNING = 2;
     const LOG_ERROR = 3;
 
-    public function  __construct($log_file = null)
+    public function __construct($log_file = null)
     {
         if (!is_null($log_file)) {
             self::$_log_file = $log_file;
@@ -27,7 +27,8 @@ class LoggerPan
      * @param [type] $log_file  Ruta del archivo
      * @return void
      */
-    public static function setLogFile ($log_file) {
+    public static function setLogFile($log_file)
+    {
         self::$_log_file = $log_file;
     }
 
@@ -39,15 +40,15 @@ class LoggerPan
      * @param [type] $type      Tipo de mensaje: INFO, ERROR o WARNING
      * @return void
      */
-    public static function writeLog ($message = null, $type = self::LOG_INFO)
+    public static function writeLog($message = null, $type = self::LOG_INFO)
     {
         if (self::$_log_file) {
             if (is_null($message)) {
                 $message = "No message";
             }
-            $fp = fopen (self::$_log_file, 'a+');
-            fwrite ($fp, date('Y-m-d H:i:s') . " [" . self::getLogNivel($type) . "] : " . $message ."\n");
-            fclose ($fp);
+            $fp = fopen(self::$_log_file, 'a+');
+            fwrite($fp, date('Y-m-d H:i:s') . " [" . self::getLogNivel($type) . "] : " . $message . "\n");
+            fclose($fp);
         }
     }
 
@@ -57,18 +58,19 @@ class LoggerPan
      *
      * @return void
      */
-    public static function clearLog () 
+    public static function clearLog()
     {
         if (self::$_log_file) {
-            unlink (self::$_log_file);
-            $fp = fopen (self::$_log_file, 'a+');
-            fclose ($fp);
+            unlink(self::$_log_file);
+            $fp = fopen(self::$_log_file, 'a+');
+            fclose($fp);
         }
     }
 
 
-    private static function getLogNivel($nivel) {
-        
+    private static function getLogNivel($nivel)
+    {
+
         if ($nivel == self::LOG_WARNING) {
             return 'WARNING';
         } elseif ($nivel == self::LOG_ERROR) {
@@ -76,6 +78,12 @@ class LoggerPan
         } else {
             return 'INFO';
         }
+    }
+
+
+    public static function printDebug($message = null, $type = self::LOG_INFO)
+    {
+        file_put_contents('php://stderr', PHP_EOL . print_r($message, TRUE) . PHP_EOL, FILE_APPEND);
     }
 
 }

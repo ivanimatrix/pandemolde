@@ -8,6 +8,8 @@ require_once __DIR__ . '/../utils/SessionPan.php';
 require_once __DIR__ . '/../utils/ErrorPan.php';
 require_once __DIR__ . '/../uri/Uri.php';
 require_once __DIR__ . '/../db/DbStore.php';
+require_once __DIR__ . '/../db/DbConexion.php';
+require_once __DIR__ . '/../db/DbConexionAudit.php';
 require_once __DIR__ . '/../db/DbQueryBuilder.php';
 require_once __DIR__ . '/../utils/panFunc.php';
 require_once __DIR__ . '/../utils/ValidatePan.php';
@@ -16,15 +18,18 @@ require_once __DIR__ . '/../utils/FilesPan.php';
 require_once __DIR__ . '/../utils/JsonPan.php';
 require_once __DIR__ . '/../utils/panMinify.php';
 require_once __DIR__ . '/../utils/LoggerPan.php';
+require_once __DIR__ . '/../utils/EnvPan.php';
+require_once __DIR__ . '/../utils/security/CsrfPan.php';
 require_once __DIR__ . '/Loader.php';
 require_once __DIR__ . '/Entity.php';
 require_once __DIR__ . '/Model.php';
 require_once __DIR__ . '/View.php';
 require_once __DIR__ . '/Controller.php';
-/* require_once __DIR__ . '/Jobs.php'; */
 require_once __DIR__ . '/Request.php';
 require_once __DIR__ . '/Response.php';
 require_once __DIR__ . '/Bootstrap.php';
+require_once __DIR__ . '/RequestOld.php';
+require_once __DIR__ . '/BootstrapOld.php';
 
 class Autoloader
 {

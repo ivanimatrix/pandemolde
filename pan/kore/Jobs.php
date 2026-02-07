@@ -1,6 +1,6 @@
 <?php
 namespace Pan\Kore;
-error_reporting(E_ALL); ini_set('display_errors', 1);
+
 /**
  * cargar el autoload para librerias en vendor
  */

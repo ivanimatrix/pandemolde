@@ -49,10 +49,10 @@ class JsonPan {
 	 */
 	public static function enc_json($_json_to_encode = null){
 		if(is_null($_json_to_encode)){
-			return json_encode(array('panJSON error' => 'Falta parámetro para realizar al codifificacion'), JSON_PRETTY_PRINT);
+			return json_encode(array('panJSON error' => 'Falta parámetro para realizar al codifificacion'), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 		}
 
-		$_arr = json_encode($_json_to_encode, JSON_PRETTY_PRINT);
+		$_arr = json_encode($_json_to_encode, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 		$_error = json_last_error();
 		switch (self::getJsonError($_error)) {
 	        case JSON_ERROR_NONE:

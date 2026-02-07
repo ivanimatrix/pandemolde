@@ -9,7 +9,8 @@ class ErrorPan
 
     public static function _showErrorAndDie($message)
     {
-
+        
+        $html_error = '';
         if (is_dir('tmp/logs/') and is_writable('tmp/logs/')) {
             //error_log("\n" . date('Y-m-d H:i:s') . " " . $message, 3, 'tmp/logs/error_log_' . date('Ymd') . '.log');
             file_put_contents('tmp/logs/error_log_' . date('Ymd') . '.log', PHP_EOL . "\n" . date('Y-m-d H:i:s') . " " . $message . PHP_EOL, FILE_APPEND);
@@ -19,16 +20,68 @@ class ErrorPan
             //file_put_contents('php://stderr', PHP_EOL . print_r($this->db->last_query(), TRUE). PHP_EOL, FILE_APPEND);
         }
 
-        $e = new \Exception();
-        $trace = self::callStack($e->getTrace());
-        $html_error = file_get_contents('pan/utils/error-view.html');
-        $html_error = str_replace('__appname__', \Pan\Kore\App::getName(), $html_error);
-        $html_error = str_replace('__message__', $message, $html_error);
-        $html_error = str_replace('__debugtrace__', $trace, $html_error);
+        if (\Pan\Kore\App::getDebugView()) {
+            $e = new \Exception();
+            $trace = self::callStack($e->getTrace());
+            /* $html_error = file_get_contents('pan/utils/error-view.html');
+            $html_error = str_replace('__appname__', \Pan\Kore\App::getName(), $html_error);
+            $html_error = str_replace('__message__', $message, $html_error);
+            $html_error = str_replace('__debugtrace__', $trace, $html_error); */
+
+            $html_error = '<html>
+            <head>
+                <style>
+                    html{
+                        background-color : #111;
+                        color : #fff;
+                        font-family: Arial, Helvetica, sans-serif;
+                    }
+                    .container{margin:0 auto; width:75%}
+                    .container-title{font-size:13px;margin:15px 0; }
+                    .container-message{font-size:12px; line-height: 20px; background-color: #777;padding: 5px 10px;}
+                    .container-debug-trace{font-family: Monaco, Inconsolata;font-size:11px; line-height: 26px; background-color: #999; padding: 5px 10px;font-weight: bold}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <hr/>
+                    <div class="container-title">Oops! Yo que tu reviso lo siguiente en ' . \Pan\Kore\App::getName() . '</div>
+                    <hr/>
+                    <div class="container-message">' . $message . '</div>
+                    <div class="container-debug-trace">' . $trace . '</div>
+                </div>
+            </body>
+            </html>';
+
+        } else {
+            $html_error = '<html>
+            <head>
+                <style>
+                    html{
+                        background-color : #111;
+                        color : #fff;
+                        font-family: Arial, Helvetica, sans-serif;
+                    }
+                    .container{margin:0 auto; width:75%}
+                    .container-title{font-size:13px;margin:15px 0; }
+                    .container-message{font-size:12px; line-height: 26px; background-color: #888; border-radius: 5px;padding: 10px;}
+                    .container-debug-trace{font-family: Monaco, Inconsolata;font-size:11px; line-height: 26px;margin:15px 0; background-color: #888; border-radius: 5px;padding: 10px;}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <hr/>
+                    <div class="container-title">Oops! Hubo un error en ' . \Pan\Kore\App::getName() . '</div>
+                    <hr/>
+                    <div class="container-message">Por favor, contactarse con el Administrador del sitio</div>
+                </div>
+            </body>
+            </html>';
+        }
         echo $html_error;
         die;
 
-        
+
     }
 
     private static function callStack($trace)
@@ -38,14 +91,14 @@ class ErrorPan
 
         for ($i = count($trace) - 1; $i > 0; $i--) {
 
-            if($i!=0){
+            if ($i != 0) {
                 $file = "";
-                if(isset($trace[$i]['file']))
+                if (isset($trace[$i]['file']))
                     $file = $trace[$i]['file'];
 
                 $line = "";
                 if (isset($trace[$i]['line']))
-                    $line = "(linea " . $trace[$i]['line'] . ")"; 
+                    $line = "(linea " . $trace[$i]['line'] . ")";
 
                 if (isset($trace[$i]['class']) and isset($trace[$i]['function'])) {
                     $error[] = "$j. " . $file . " en " . $trace[$i]['class'] . "::" . $trace[$i]['function'] . $line;
@@ -55,12 +108,13 @@ class ErrorPan
             }
         }
 
-        return implode("<br/>",$error);
+        return implode("<br/>", $error);
 
     }
 
 
-    private static function debugTrace(){
+    private static function debugTrace()
+    {
 
         return self::callStack(debug_backtrace());
         // Remove first item from backtrace as it's this function which 
@@ -102,10 +156,10 @@ class ErrorPan
                 file_put_contents('php://stderr', PHP_EOL . \Pan\Kore\App::getName() . " " . $message . PHP_EOL, FILE_APPEND);
                 //file_put_contents('php://stderr', PHP_EOL . print_r($this->db->last_query(), TRUE). PHP_EOL, FILE_APPEND);
             }
-            
+
             $e = new \Exception();
             $trace = self::callStack($e->getTrace());
-    
+
             $content_file_error = '';
             $fp = fopen($errfile, 'r');
             $line = 1;
@@ -117,23 +171,18 @@ class ErrorPan
             while ($read_linea = fgets($fp)) {
                 if ($line >= $start_line and $line <= $end_line) {
                     if ($line == $errline) {
-                        $content_file_error .= '<span style="color:#821a1a;font-weight: bold;">'.$line . '</span>. ' . $read_linea;
+                        $content_file_error .= '<span style="color:#821a1a;font-weight: bold;">' . $line . '</span>. ' . $read_linea;
                     } else {
                         $content_file_error .= $line . '. ' . $read_linea;
                     }
-    
+
                 }
                 $line++;
             }
             fclose($fp);
-    
+
             if (\Pan\Kore\App::getDebugView()) {
-                error_log(__DIR__);
-                $html_error = file_get_contents(__DIR__ .'/error-view.html');
-                $html_error = str_replace('__appname__', \Pan\Kore\App::getName(), $html_error);
-                $html_error = str_replace('__message__', $message, $html_error);
-                $html_error = str_replace('__debugtrace__', '<p>File ' . $errfile .':</p><pre style="font-size:10px;line-height: 16px;">' . $content_file_error . '</pre>', $html_error);
-                /* $html_error = '<html>
+                $html_error = '<html>
                             <head>
                                 <style>
                                     html{
@@ -152,13 +201,13 @@ class ErrorPan
                                     <hr/>
                                     <div class="container-title">Oops! Yo que tu reviso lo siguiente en ' . \Pan\Kore\App::getName() . '</div>
                                     <hr/>
-                                    <div class="container-message">' . $message . '</div>
-                                    
-                                    <div class="container-code"><p>File ' . $errfile .':</p><pre style="font-size:10px;line-height: 16px;">' . $content_file_error . '</pre></div>
+                                    <div class="container-message">' . htmlentities($message) . '</div>
+
+                                    <div class="container-code"><p>File ' . htmlentities($errfile) .':</p><pre style="font-size:10px;line-height: 16px;">' . htmlentities($content_file_error) . '</pre></div>
                                 </div>
                             </body>
-                            </html>'; */
-    
+                            </html>';
+
             } else {
                 $html_error = '<html>
                             <head>
@@ -183,15 +232,15 @@ class ErrorPan
                                 </div>
                             </body>
                             </html>';
-    
+
             }
-    
+
             echo $html_error;
             die;
         }
 
-        
-        
+
+
         //throw new \Exception( $message);
 
 
@@ -201,11 +250,11 @@ class ErrorPan
     public static function _showShutDown()
     {
 
-        define('E_FATAL',  E_ERROR | E_USER_ERROR | E_PARSE | E_CORE_ERROR |
+        define('E_FATAL', E_ERROR | E_USER_ERROR | E_PARSE | E_CORE_ERROR |
             E_COMPILE_ERROR | E_RECOVERABLE_ERROR);
         $error = error_get_last();
-        
-        if($error && ($error['type'] & E_FATAL)){
+
+        if ($error && ($error['type'] & E_FATAL)) {
             \Pan\Utils\ErrorPan::_showError($error['type'], $error['message'], $error['file'], $error['line']);
         }
     }

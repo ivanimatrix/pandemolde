@@ -29,7 +29,7 @@ class Uri
         $tmp	= array_pop($url);
         $url	= implode("/", $url);
 
-        return self::getUriProtocol() . $url . '/';
+        return HTTP_PROTOCOL . '://' . $url . '/';
     }
 
 
@@ -50,7 +50,7 @@ class Uri
         $tmp = array_pop($url);
         $url = implode("/", $url);
 
-        return self::getUriProtocol() . $url . '/';
+        return HTTP_PROTOCOL . '://' . $url . '/';
         //return $_SERVER['SERVER_NAME'];
 
     }
@@ -66,6 +66,12 @@ class Uri
     {
         return \Pan\Kore\App::getHttpProtocol() . '://';
         //return  (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    }
+
+
+    public static function redirect($url)
+    {
+        header('Location:' . $url);
     }
 
 }

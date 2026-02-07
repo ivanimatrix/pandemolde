@@ -16,7 +16,18 @@ class FilesPan {
     }
 
 
+    /**
+     * guardar archivo en cache
+     * @param $file archivo a guardar
+     * @param $path ruta en donde se va a guardar el cache del archivo
+     * @return string se retorna un hash asociado al cache guardado del archivo
+     */
+    public static function cacheIt($file, $path = 'tmp/cache')
+    {
 
+        $hash = '';
+        return $hash;
+    }
 
 
 }
